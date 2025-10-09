@@ -72,7 +72,7 @@ const CarouselHeroSection = ({ User }) => {
   return (
     <section
       className="section-hero text-white relative overflow-hidden 
-                 min-h-[calc(100vh-64px)] flex flex-col"
+                 h-[100vh] sm:h-[calc(100vh-64px)] flex flex-col"
     >
       {/* Background Images */}
       {slides.map((slide, index) => (
@@ -92,40 +92,40 @@ const CarouselHeroSection = ({ User }) => {
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 
                        bg-white/20 hover:bg-white/40 backdrop-blur-sm 
-                       rounded-full p-3 transition-all duration-300 hover:scale-110"
+                       rounded-full p-2 sm:p-3 transition-all duration-300 hover:scale-110"
             aria-label="Previous slide"
           >
-            <ChevronLeft className="w-6 h-6 text-white" />
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </button>
 
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 
                        bg-white/20 hover:bg-white/40 backdrop-blur-sm 
-                       rounded-full p-3 transition-all duration-300 hover:scale-110"
+                       rounded-full p-2 sm:p-3 transition-all duration-300 hover:scale-110"
             aria-label="Next slide"
           >
-            <ChevronRight className="w-6 h-6 text-white" />
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </button>
         </>
       )}
 
       {/* Content */}
-      <div className="relative container mx-auto flex flex-col flex-1 justify-between px-4 py-6 z-10">
+      <div className="relative container mx-auto flex flex-col flex-1 justify-between px-4 py-3 sm:py-6 z-10 min-h-0">
         {/* Headers */}
-        <div className="text-center mt-6 space-y-4">
+        <div className="text-center mt-2 sm:mt-6 space-y-2 sm:space-y-4 flex-shrink-0">
           <h1
             key={`title-${currentSlide}`}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl 
+            className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl 
                        font-bold leading-tight animate-[fadeInScale_0.8s_ease-out_forwards]"
           >
             {slides[currentSlide].title}
           </h1>
           <h2
             key={`subtitle-${currentSlide}`}
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl 
+            className="text-xl sm:text-3xl md:text-4xl lg:text-6xl 
                        font-bold leading-tight animate-[slideUp_0.8s_ease-out_0.3s_forwards]"
           >
             {slides[currentSlide].subtitle}
@@ -133,16 +133,16 @@ const CarouselHeroSection = ({ User }) => {
         </div>
 
         {/* Rate Card */}
-        <div className="flex-1 flex items-center justify-center mt-6 sm:mt-10">
+        <div className="flex-1 flex items-center justify-center py-3 sm:py-6 min-h-0">
           <div
             className="w-full max-w-xs sm:max-w-sm text-center bg-white/10 
-                       backdrop-blur-md rounded-2xl p-4 transition-transform 
+                       backdrop-blur-md rounded-2xl p-3 sm:p-4 transition-transform 
                        transition-shadow duration-500 ease-out hover:scale-105 
                        hover:-translate-y-2 hover:shadow-xl"
           >
-            <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2">
-              <span className="text-white/60 text-sm sm:text-base line-through">₹29</span>
-              <span className="text-white text-2xl sm:text-4xl font-bold">₹10</span>
+            <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-1 sm:mb-2">
+              <span className="text-white/60 text-sm sm:text-base line-through">₹19</span>
+              <span className="text-white text-xl sm:text-4xl font-bold">₹10</span>
               <span className="text-white/80 text-xs sm:text-lg">/item</span>
             </div>
             <div className="text-xs sm:text-sm text-white/70">
@@ -157,30 +157,30 @@ const CarouselHeroSection = ({ User }) => {
 
       {/* Buttons + Indicators + Service Hours */}
       <div
-        className="pb-5 md:pb-7 lg:pb-7 sm:pb-7 flex flex-col 
-                   items-center gap-3 mx-auto z-10"
+        className="pb-4 sm:pb-5 md:pb-7 lg:pb-7 flex flex-col 
+                   items-center gap-2 sm:gap-3 mx-auto z-10 flex-shrink-0"
       >
         {/* Buttons */}
         <div
-          className="flex flex-col sm:flex-row gap-4 
-                     justify-center w-full max-w-md"
+          className="flex flex-col sm:flex-row gap-3 sm:gap-4 
+                     justify-center w-full max-w-md px-2"
         >
           <Link to={User ? '/customer/book-slot' : '/select-role'}>
             <Button
               size="lg"
-              className="btn-hero text-base sm:text-lg md:text-xl 
-                         min-w-[150px] h-14 sm:py-5"
+              className="btn-hero text-sm sm:text-base md:text-xl 
+                         min-w-[140px] sm:min-w-[150px] h-12 sm:h-14 w-full sm:w-auto"
             >
-              Book Now - Get 65% Off
+              Book Now - Get 50% Off
             </Button>
           </Link>
           <Link to="/customer/ordertrack">
             <Button
               size="lg"
               variant="outline"
-              className="text-primary h-14 bg-gray-100 hover:text-white
-                         text-sm sm:text-lg min-w-[150px] py-3.5 
-                         px-[84px] md:px-10 lg:px-12 sm:px-8 hover:bg-primary"
+              className="text-primary h-12 sm:h-14 bg-gray-100 hover:text-white
+                         text-sm sm:text-base md:text-lg min-w-[140px] sm:min-w-[150px] 
+                         w-full sm:w-auto hover:bg-primary"
             >
               Track Order
             </Button>
@@ -189,14 +189,14 @@ const CarouselHeroSection = ({ User }) => {
 
         {/* Carousel Indicators */}
         {slides.length > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-2">
+          <div className="flex items-center justify-center gap-2 mt-1 sm:mt-2">
             {slides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
                 className={`transition-all duration-300 rounded-full ${
                   index === currentSlide
-                    ? 'bg-white w-8 h-2 shadow-lg'
+                    ? 'bg-white w-6 sm:w-8 h-2 shadow-lg'
                     : 'bg-gray-200 w-2 h-2'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
@@ -206,8 +206,8 @@ const CarouselHeroSection = ({ User }) => {
         )}
 
         {/* Service Hours */}
-        <div className="flex items-center justify-center space-x-2 text-white/80 text-xs sm:text-sm">
-          <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+        <div className="flex items-center justify-center space-x-2 text-white/80 text-xs sm:text-sm mt-1">
+          <Clock className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 flex-shrink-0" />
           <span>Service Hours: 8 AM - 8 PM Daily</span>
         </div>
       </div>
