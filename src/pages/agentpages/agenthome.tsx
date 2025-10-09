@@ -27,10 +27,13 @@ interface OrderFlow {
 interface Order {
     _id: string;
     userid: string;
+    user_name:String,
+    user_phoneno:String,
     user_address: Address;
     order_date: string;
     order_totalamount: string;
     order_totalcloths: string;
+    order_deliveryspeed: string;
     order_slot: string;
     order_paymenttype: string;
     order_flow: OrderFlow[];
@@ -219,8 +222,8 @@ const Agenthome: React.FC = () => {
         const showQRButton = isLastStep(order.order_flow) && order.order_paymenttype === 'online payment';
         const canUpdate = !showQRButton || qrScanned;
 
-        const customerName = order.user_address?.name || 'N/A';
-        const customerPhone = order.user_address?.phone || 'N/A';
+        const customerName = order?.user_name || 'N/A';
+        const customerPhone = order?.user_phoneno || 'N/A';
         const customerAddress = order.user_address?.address ||
             `${order.user_address?.street || ''} ${order.user_address?.city || ''} ${order.user_address?.state || ''} ${order.user_address?.pincode || ''}`.trim() ||
             'N/A';
@@ -462,8 +465,8 @@ const Agenthome: React.FC = () => {
                                                         <p className="font-bold text-blue-800">{order.order_slot}</p>
                                                     </div>
                                                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
-                                                        <p className="text-xs text-blue-700 font-semibold mb-1">Payment</p>
-                                                        <p className="font-bold text-blue-800 capitalize">{order.order_paymenttype}</p>
+                                                        <p className="text-xs text-blue-700 font-semibold mb-1">Delivery type</p>
+                                                        <p className="font-bold text-blue-800 capitalize">{order.order_deliveryspeed}</p>
                                                     </div>
                                                 </div>
 

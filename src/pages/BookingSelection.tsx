@@ -95,7 +95,8 @@ const BookingSelection = () => {
                   </Button>
                 </Link>
                 <Link to="/agent/login" className="block">
-                  <Button variant="outline" className="btn-secondary w-full">
+                  <Button variant="outline" className="btn-secondary
+                  hover:bg-success/90 w-full">
                     Already registered? Sign In
                   </Button>
                 </Link>

@@ -133,7 +133,8 @@ const Userprofile = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-7 md:mt-8">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 
+                        mt-6 sm:mt-7 md:mt-8">
                             <Button
                                 onClick={() => navigate('/customer/profile/edit-profile')}
                                 className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 
@@ -151,8 +152,9 @@ const Userprofile = () => {
                                 onClick={() => setShowLogoutModal(true)}
                                 className="flex-1 bg-gradient-to-r from-red-600 to-red-500 
                                     hover:from-red-700 hover:to-red-600 text-white font-semibold 
-                                    py-6 px-4 rounded-lg sm:rounded-xl shadow-lg 
-                                    transform transition-all duration-300 hover:scale-105 
+                                    md:py-6 px-4 rounded-lg sm:rounded-xl shadow-lg 
+                                    transform transition-all duration-300 
+                                    hover:scale-105 
                                     hover:-translate-y-1 text-sm sm:text-base
                                     active:scale-95 touch-manipulation"
                             >

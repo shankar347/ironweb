@@ -38,6 +38,7 @@ import NotFound from "./pages/NotFound";
 import Agentanalysis from './pages/agentpages/agentanalysis';
 import Agentorders from './pages/agentpages/agentorders';
 import Agentprofile from './pages/agentpages/agentprofile';
+import Uploadcleintassets from './pages/adminpages/uploadcleintassets';
 
 const ProtectedRoute = ({ user, allowed, children }: { user: any, allowed: "customer" | "agent" | "admin", children: React.ReactNode }) => {
     if (!user) {
@@ -151,6 +152,9 @@ const Approuter = () => {
                 } />
                 <Route path="/admin/order-amount" element={
                     <ProtectedRoute user={User} allowed="admin"><Adminorderamount /></ProtectedRoute>
+                } />
+                <Route path="/admin/upload/clientpageassets" element={
+                    <ProtectedRoute user={User} allowed="admin"><Uploadcleintassets /></ProtectedRoute>
                 } />
 
                 {/* Catch-all */}

@@ -43,6 +43,7 @@ interface Order {
     order_totalcloths: string;
     order_slot: string;
     order_paymenttype: string;
+    order_deliveryspeed:String
     order_flow: OrderFlow[];
     agent_id?: string;
     agent_name?: string;
@@ -439,6 +440,17 @@ const Adminassignoerder: React.FC = () => {
                 render: (row: Order) => (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {row.order_slot}
+                    </span>
+                )
+            },
+              {
+                header: 'Delivery Type',
+                key: 'order_deliveryspeed',
+                render: (row: Order) => (
+                    <span className="inline-flex items-center 
+                    px-3 py-1 rounded-full text-md 
+                     font-bold text-blue-800">
+                        {row.order_deliveryspeed}
                     </span>
                 )
             },

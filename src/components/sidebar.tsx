@@ -13,7 +13,8 @@ import {
     IndianRupee,
     Truck,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Upload
 } from 'lucide-react';
 import { SteamContext } from '../hooks/steamcontext';
 import { API_URL } from '../hooks/tools';
@@ -37,6 +38,7 @@ const Sidebar = () => {
         { path: '/admin/assign-orders', icon: UserPlus, label: 'Assign Orders' },
         { path: '/admin/activate-agents', icon: Power, label: 'Activate Agents' },
         { path: '/admin/order-amount', icon: IndianRupee, label: 'Order Amount' },
+        { path: '/admin/upload/clientpageassets', icon: Upload, label: 'Upload Banners' },
     ];
 
     const isActive = (path: string) => location.pathname === path;

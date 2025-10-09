@@ -6,7 +6,6 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import Home from "./pages/userpages/Home";
 import Services from "./pages/userpages/Services";
 import BookingSelection from "./pages/BookingSelection";
 import CustomerRegister from "./pages/userpages/CustomerRegister";

@@ -1,8 +1,8 @@
 import { useContext, useState, useEffect, useRef } from 'react';
-import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { ShirtIcon, ShoppingCart, Clock, Wallet, CreditCard, HandCoinsIcon, ListOrdered, Plus, Minus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Shirt, ShoppingCart, Clock, Wallet, CreditCard, HandCoins, ListOrdered, Plus, Minus, Zap, Gauge, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { SteamContext } from '../../hooks/steamcontext';
@@ -17,6 +17,9 @@ const BookSlot = () => {
     const [isinputon, setisinputon] = useState(false);
     const [paymenttype, selectpaymenttype] = useState('');
     const [totalamount, settotalamount] = useState(0);
+    const [deliverySpeed, setDeliverySpeed] = useState<'normal' | 'speed' | 'lightning'>('normal');
+    const [hoveredSpeed, setHoveredSpeed] = useState<string | null>(null);
+    const [currentTime, setCurrentTime] = useState(new Date());
 
     const [errors, setErrors] = useState({
         totalcloths: "",
@@ -24,7 +27,6 @@ const BookSlot = () => {
         paymenttype: "",
     });
 
-    // Refs for scrolling to missing sections
     const clothRef = useRef<HTMLDivElement | null>(null);
     const slotRef = useRef<HTMLDivElement | null>(null);
     const paymentRef = useRef<HTMLDivElement | null>(null);
@@ -32,20 +34,107 @@ const BookSlot = () => {
     const navigate = useNavigate();
 
     let ironprice = 15;
-    let deliveryprice = 20;
     let handlingcharge = 10;
+
+    const deliveryCharges = {
+        normal: 20,
+        speed: 35,
+        lightning: 45
+    };
+
+    const speedInfo = {
+        normal: {
+            title: "Normal Delivery",
+            description: "Standard 3-hour time slots. Best for planned schedules.",
+            icon: Shirt,
+            color: "blue",
+            bufferMinutes: 90
+        },
+        speed: {
+            title: "Speed Delivery",
+            description: "Quick 1.5-hour slots. Faster service with moderate priority.",
+            icon: Gauge,
+            color: "orange",
+            bufferMinutes: 60
+        },
+        lightning: {
+            title: "Lightning Delivery",
+            description: "Express 1-hour slots. Highest priority and fastest service!",
+            icon: Zap,
+            color: "purple",
+            bufferMinutes: 30
+        }
+    };
 
     const buttonValues = ['1', '3', '6', '9', '10', '12', '15', '18', '20'];
 
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000);
 
+        return () => clearInterval(timer);
+    }, []);
+
+    const parseTimeSlot = (slot: string) => {
+        const [start, end] = slot.split(' - ');
+        const parseTime = (time: string) => {
+            const [hourStr, period] = time.split(/(?=[AP]M)/);
+            let hour = parseInt(hourStr);
+            if (period === 'PM' && hour !== 12) hour += 12;
+            if (period === 'AM' && hour === 12) hour = 0;
+            return hour;
+        };
+        return { startHour: parseTime(start), endHour: parseTime(end) };
+    };
+
+    const isSlotAvailable = (slot: string) => {
+        const { startHour, endHour } = parseTimeSlot(slot);
+        const now = currentTime;
+        const currentHour = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentTotalMinutes = currentHour * 60 + currentMinutes;
+        const endTotalMinutes = endHour * 60;
+        const bufferMinutes = speedInfo[deliverySpeed].bufferMinutes;
+        
+        return endTotalMinutes - bufferMinutes > currentTotalMinutes;
+    };
+
+    const getTimeSlots = () => {
+        let allSlots: string[] = [];
+        
+        switch(deliverySpeed) {
+            case 'normal':
+                allSlots = ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM'];
+                break;
+            case 'speed':
+                allSlots = ['6AM - 7:30AM', '7:30AM - 9AM', '9AM - 10:30AM', '10:30AM - 12PM', 
+                        '12PM - 1:30PM', '1:30PM - 3PM', '3PM - 4:30PM', '4:30PM - 6PM'];
+                break;
+            case 'lightning':
+                allSlots = ['6AM - 7AM', '7AM - 8AM', '8AM - 9AM', '9AM - 10AM', '10AM - 11AM', 
+                        '11AM - 12PM', '12PM - 1PM', '1PM - 2PM', '2PM - 3PM', '3PM - 4PM', 
+                        '4PM - 5PM', '5PM - 6PM'];
+                break;
+            default:
+                allSlots = ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM'];
+        }
+        
+        return allSlots.filter(slot => isSlotAvailable(slot));
+    };
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     }, []);
 
     useEffect(() => {
+        setSelectedSlot(null);
+    }, [deliverySpeed]);
+
+    useEffect(() => {
+        const deliveryprice = deliveryCharges[deliverySpeed];
         settotalamount(handlingcharge + deliveryprice + (Number(totalcloths) * ironprice));
-    }, [totalcloths]);
+    }, [totalcloths, deliverySpeed]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,7 +169,8 @@ const BookSlot = () => {
                 totalcloths,
                 timeslot: selectedSlot,
                 paymenttype,
-                totalamount
+                totalamount,
+                deliverySpeed
             }
         };
 
@@ -89,7 +179,7 @@ const BookSlot = () => {
         navigate('/customer/confirmaddress');
     };
 
-    const Timeslots = ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM'];
+    const Timeslots = getTimeSlots();
     const options = Timeslots.map((slot) => ({ value: slot, label: slot }));
 
     return (
@@ -98,120 +188,307 @@ const BookSlot = () => {
                 <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
                         <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <ShirtIcon className="w-8 h-8 text-primary" />
+                            <Shirt className="w-8 h-8 text-primary" />
                         </div>
-                        <h1 className="text-3xl font-bold text-foreground mb-2">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
                             Book Iron Slot
                         </h1>
-                        <p className="text-muted-foreground">
+                        <p className="text-sm sm:text-base text-muted-foreground">
                             Select your preferred slot and quantity
                         </p>
                     </div>
 
+                    {/* Delivery Speed Selection - Outside Card */}
+                    <div className="mb-5 px-2">
+                        <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center space-x-2 mb-4">
+                            <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                            <span>Choose Delivery Speed</span>
+                        </h3>
+                        
+                        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+                            {/* Normal Speed */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setDeliverySpeed('normal')}
+                                    onMouseEnter={() => setHoveredSpeed('normal')}
+                                    onMouseLeave={() => setHoveredSpeed(null)}
+                                    className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${
+                                        deliverySpeed === 'normal' 
+                                            ? 'border-blue-500 bg-blue-500 shadow-lg text-white' 
+                                            : 'border-blue-300 bg-white hover:border-blue-400 hover:shadow-md text-gray-700'
+                                    }`}
+                                >
+                                    <div className="flex flex-col items-center space-y-1 sm:space-y-2">
+                                        <Shirt className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${
+                                            deliverySpeed === 'normal' ? 'text-white' : 'text-blue-500'
+                                        } ${deliverySpeed !== 'normal' ? 'animate-bounce' : ''}`} />
+                                        <span className={`font-semibold text-xs sm:text-sm md:text-base ${
+                                            deliverySpeed === 'normal' ? 'text-white' : 'text-blue-600'
+                                        }`}>
+                                            Normal
+                                        </span>
+                                        <span className={`text-xs sm:text-sm ${
+                                            deliverySpeed === 'normal' ? 'text-blue-100' : 'text-gray-600'
+                                        }`}>₹{deliveryCharges.normal}</span>
+                                        <span className={`text-[10px] sm:text-xs ${
+                                            deliverySpeed === 'normal' ? 'text-blue-100' : 'text-gray-500'
+                                        }`}>3 hr slots</span>
+                                    </div>
+                                    {deliverySpeed !== 'normal' && (
+                                        <div className="absolute -top-1 -right-1">
+                                            <div className="w-3 h-3 bg-blue-400 rounded-full animate-ping"></div>
+                                        </div>
+                                    )}
+                                </button>
+                                
+                                {hoveredSpeed === 'normal' && (
+                                    <div className="hidden sm:block absolute z-10 w-64 p-3 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl left-1/2 transform -translate-x-1/2">
+                                        <div className="flex items-start space-x-2">
+                                            <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                            <div>
+                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.normal.title}</p>
+                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.normal.description}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Speed Delivery */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setDeliverySpeed('speed')}
+                                    onMouseEnter={() => setHoveredSpeed('speed')}
+                                    onMouseLeave={() => setHoveredSpeed(null)}
+                                    className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${
+                                        deliverySpeed === 'speed' 
+                                            ? 'border-orange-500 bg-orange-500 shadow-lg text-white' 
+                                            : 'border-orange-300 bg-white hover:border-orange-400 hover:shadow-md text-gray-700'
+                                    } ${deliverySpeed !== 'speed' ? 'hover:animate-pulse' : ''}`}
+                                >
+                                    <div className="flex flex-col items-center space-y-1 sm:space-y-2">
+                                        <Gauge className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${
+                                            deliverySpeed === 'speed' ? 'text-white' : 'text-orange-500'
+                                        } ${deliverySpeed === 'speed' ? 'animate-spin' : ''}`} 
+                                        style={{ animationDuration: deliverySpeed === 'speed' ? '3s' : 'none' }} />
+                                        <span className={`font-semibold text-xs sm:text-sm md:text-base ${
+                                            deliverySpeed === 'speed' ? 'text-white' : 'text-orange-600'
+                                        }`}>
+                                            Speed
+                                        </span>
+                                        <span className={`text-xs sm:text-sm ${
+                                            deliverySpeed === 'speed' ? 'text-orange-100' : 'text-gray-600'
+                                        }`}>₹{deliveryCharges.speed}</span>
+                                        <span className={`text-[10px] sm:text-xs ${
+                                            deliverySpeed === 'speed' ? 'text-orange-100' : 'text-gray-500'
+                                        }`}>1.5 hr</span>
+                                    </div>
+                                    {deliverySpeed === 'speed' && (
+                                        <div className="absolute top-2 right-2">
+                                            <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                                        </div>
+                                    )}
+                                    {deliverySpeed !== 'speed' && (
+                                        <div className="absolute -top-1 -right-1">
+                                            <div className="w-3 h-3 bg-orange-400 rounded-full animate-pulse"></div>
+                                        </div>
+                                    )}
+                                </button>
+                                
+                                {hoveredSpeed === 'speed' && (
+                                    <div className="hidden sm:block absolute z-10 w-64 p-3 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl left-1/2 transform -translate-x-1/2">
+                                        <div className="flex items-start space-x-2">
+                                            <Info className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                                            <div>
+                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.speed.title}</p>
+                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.speed.description}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Lightning Fast */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setDeliverySpeed('lightning')}
+                                    onMouseEnter={() => setHoveredSpeed('lightning')}
+                                    onMouseLeave={() => setHoveredSpeed(null)}
+                                    className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-110 ${
+                                        deliverySpeed === 'lightning' 
+                                            ? 'border-purple-500 bg-gradient-to-br from-purple-500 to-purple-600 shadow-2xl text-white' 
+                                            : 'border-purple-300 bg-white hover:border-purple-400 hover:shadow-md text-gray-700'
+                                    } ${deliverySpeed !== 'lightning' ? 'hover:animate-pulse' : ''}`}
+                                >
+                                    <div className="flex flex-col items-center space-y-1 sm:space-y-2">
+                                        <Zap className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${
+                                            deliverySpeed === 'lightning' ? 'text-yellow-300 animate-bounce' : 'text-purple-500'
+                                        }`} />
+                                        <span className={`font-semibold text-xs sm:text-sm md:text-base ${
+                                            deliverySpeed === 'lightning' ? 'text-white' : 'text-purple-600'
+                                        }`}>
+                                            Lightning
+                                        </span>
+                                        <span className={`text-xs sm:text-sm ${
+                                            deliverySpeed === 'lightning' ? 'text-purple-100' : 'text-gray-600'
+                                        }`}>₹{deliveryCharges.lightning}</span>
+                                        <span className={`text-[10px] sm:text-xs ${
+                                            deliverySpeed === 'lightning' ? 'text-purple-100' : 'text-gray-500'
+                                        }`}>1 hr</span>
+                                    </div>
+                                    {deliverySpeed === 'lightning' && (
+                                        <>
+                                            <div className="absolute top-2 right-2">
+                                                <Zap className="w-4 h-4 text-yellow-300 animate-ping" />
+                                            </div>
+                                            <div className="absolute top-2 left-2">
+                                                <div className="w-2 h-2 bg-yellow-300 rounded-full animate-pulse"></div>
+                                            </div>
+                                        </>
+                                    )}
+                                    {deliverySpeed !== 'lightning' && (
+                                        <div className="absolute -top-1 -right-1">
+                                            <Zap className="w-4 h-4 text-purple-400 animate-bounce" />
+                                        </div>
+                                    )}
+                                </button>
+                                
+                                {hoveredSpeed === 'lightning' && (
+                                    <div className="hidden sm:block absolute z-10 w-64 p-3 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl left-1/2 transform -translate-x-1/2">
+                                        <div className="flex items-start space-x-2">
+                                            <Info className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                                            <div>
+                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.lightning.title}</p>
+                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.lightning.description}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                            <p className="text-xs sm:text-sm text-gray-800">
+                                <strong className="text-primary">Selected:</strong> {speedInfo[deliverySpeed].title} - {speedInfo[deliverySpeed].description}
+                            </p>
+                        </div>
+                    </div>
+
                     {/* Cloth Selection */}
-                    <Card ref={clothRef} className="card-service p-8">
-                        <h3 className="text-lg font-semibold text-foreground flex items-center space-x-2">
-                            <ShoppingCart className="w-5 h-5 text-primary" />
+                    <Card ref={clothRef} className="card-service p-4 sm:p-6 md:p-8 mx-2 sm:mx-0">
+                        <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center space-x-2 mb-4">
+                            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                             <span>Select No of Cloths</span>
                         </h3>
 
-                        <div className='flex justify-around flex-wrap'>
+                        <div className='flex justify-center flex-wrap gap-2 my-5'>
                             {buttonValues.map((btn) => (
                                 <Button
                                     key={btn}
-                                    size={'lg'}
+                                    size={'sm'}
                                     onClick={() => setTotalcloths(btn)}
-                                    className={`hover:bg-gray-100 m-1 my-5 lg:m-5 md:m-5 sm:m-5
-                    hover:text-primary hover:border-2 min-w-8 hover:border-primary
-                    ${Number(totalcloths) === Number(btn) && 'bg-gray-100 text-primary border-2 border-primary'}`}
+                                    className={`hover:bg-gray-100 hover:text-primary hover:border-2 min-w-[55px] sm:min-w-[70px] hover:border-primary transition-all duration-200 text-xs sm:text-sm ${
+                                        Number(totalcloths) === Number(btn) && 'bg-gray-100 text-primary border-2 border-primary'
+                                    }`}
                                 >
-                                    {btn} cloths
+                                    {btn}
                                 </Button>
                             ))}
                         </div>
 
-                        <div className='flex justify-between items-baseline'>
-                            <div className='ml-10 flex items-baseline space-x-2'>
+                        <div className='flex flex-col sm:flex-row justify-between items-center gap-4 px-2 sm:px-4'>
+                            <div className='flex items-center space-x-3'>
                                 <Button
-                                    className='w-8 h-8'
+                                    size="sm"
+                                    className='w-8 h-8 sm:w-10 sm:h-10 p-0'
                                     onClick={() => setTotalcloths((prev) => String(Math.max(0, Number(prev) - 1)))}
                                 >
-                                    <Minus className='w-12 h-12 text-white text-3xl' color='white' />
+                                    <Minus className='w-4 h-4 sm:w-5 sm:h-5' />
                                 </Button>
-                                <div className='font-bold'>{totalcloths}</div>
+                                <div className='font-bold text-lg sm:text-xl min-w-[40px] text-center'>{totalcloths}</div>
                                 <Button
-                                    className='w-8 h-8'
+                                    size="sm"
+                                    className='w-8 h-8 sm:w-10 sm:h-10 p-0'
                                     onClick={() => setTotalcloths((prev) => String(Number(prev) + 1))}
                                 >
-                                    <Plus className='w-12 h-12 text-white text-3xl' color='white' />
+                                    <Plus className='w-4 h-4 sm:w-5 sm:h-5' />
                                 </Button>
                             </div>
                             <div
                                 onClick={() => setisinputon(true)}
-                                className='font-medium text-primary text-sm text-right mr-10 cursor-pointer'
+                                className='font-medium text-primary text-xs sm:text-sm cursor-pointer hover:underline'
                             >
                                 Have more than 20?
                             </div>
                         </div>
 
                         {isinputon && (
-                            <div className='flex md:w-[88%] lg:w-[88%] sm:w-[88%] w-[100%] h-12 mx-auto mt-5'>
+                            <div className='flex w-full max-w-md mx-auto mt-5 gap-2'>
                                 <Input
                                     id="cloth"
                                     name="cloth"
-                                    type="text"
+                                    type="number"
                                     placeholder="Enter no of cloths"
-                                    className="pl-5 h-full rounded-r-none w-[90%]"
+                                    className="flex-1 text-sm"
                                     value={totalcloths}
                                     onChange={(e) => setTotalcloths(e.target.value)}
                                     required
                                 />
-                                <Button className='min-w-[20%] h-full rounded-l-none'>
+                                <Button className='px-4 sm:px-6 text-sm'>
                                     Enter
                                 </Button>
                             </div>
                         )}
 
                         {errors.totalcloths && (
-                            <p className="text-red-500 text-sm mt-2">{errors.totalcloths}</p>
+                            <p className="text-red-500 text-xs sm:text-sm mt-2 text-center">{errors.totalcloths}</p>
                         )}
                     </Card>
 
                     {/* Slot Selection */}
-                    <Card ref={slotRef} className="card-service p-8 my-5">
-                        <h3 className="text-lg mb-5 font-semibold text-foreground flex items-center space-x-2">
-                            <Clock className="w-5 h-5 text-primary" />
+                    <Card ref={slotRef} className="card-service p-4 sm:p-6 md:p-8 my-5 mx-2 sm:mx-0">
+                        <h3 className="text-base sm:text-lg mb-4 sm:mb-5 font-semibold text-foreground flex items-center space-x-2">
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                             <span>Select Time Slots</span>
                         </h3>
 
-                        <Select
-                            options={options}
-                            value={options.find((opt) => opt.value === selectedSlot) || null}
-                            onChange={(selected) => setSelectedSlot(selected?.value || null)}
-                            placeholder="Book your preferred slot"
-                            className="w-full"
-                            styles={{
-                                control: (base) => ({
-                                    ...base,
-                                    borderRadius: "0.5rem",
-                                    borderColor: "#D1D5DB",
-                                    padding: "0.25rem",
-                                }),
-                            }}
-                        />
+                        {Timeslots.length > 0 ? (
+                            <Select
+                                options={options}
+                                value={options.find((opt) => opt.value === selectedSlot) || null}
+                                onChange={(selected) => setSelectedSlot(selected?.value || null)}
+                                placeholder="Book your preferred slot"
+                                className="w-full text-sm"
+                                styles={{
+                                    control: (base) => ({
+                                        ...base,
+                                        borderRadius: "0.5rem",
+                                        borderColor: "#D1D5DB",
+                                        padding: "0.25rem",
+                                        fontSize: "0.875rem"
+                                    }),
+                                }}
+                            />
+                        ) : (
+                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                                <p className="text-xs sm:text-sm text-yellow-800">
+                                    No available slots for today. Please try again tomorrow or choose a different delivery speed.
+                                </p>
+                            </div>
+                        )}
                         {errors.selectedSlot && (
-                            <p className="text-red-500 text-sm mt-2">{errors.selectedSlot}</p>
+                            <p className="text-red-500 text-xs sm:text-sm mt-2">{errors.selectedSlot}</p>
                         )}
                     </Card>
 
                     {/* Payment Section */}
-                    <Card ref={paymentRef} className="card-service p-8 my-5">
-                        <h3 className="text-lg mb-5 font-semibold text-foreground flex items-center space-x-2">
-                            <Wallet className="w-5 h-5 text-primary" />
+                    <Card ref={paymentRef} className="card-service p-4 sm:p-6 md:p-8 my-5 mx-2 sm:mx-0">
+                        <h3 className="text-base sm:text-lg mb-4 sm:mb-5 font-semibold text-foreground flex items-center space-x-2">
+                            <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                             <span>Select Payment Type</span>
                         </h3>
 
-                        <label className="flex items-center mb-4 cursor-pointer">
+                        <label className="flex items-center mb-4 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
                             <input
                                 type="radio"
                                 name="payment"
@@ -220,14 +497,14 @@ const BookSlot = () => {
                                 checked={paymenttype === 'online payment'}
                                 onChange={() => selectpaymenttype('online payment')}
                             />
-                            <div className="w-5 h-5 mx-3 rounded-full border border-gray-400 peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-white"></div>
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 mx-2 sm:mx-3 rounded-full border border-gray-400 peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center flex-shrink-0">
+                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white"></div>
                             </div>
-                            <CreditCard className="w-5 h-5 mr-1 text-primary" />
-                            <span>Online Payment</span>
+                            <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary flex-shrink-0" />
+                            <span className="text-sm sm:text-base">Online Payment</span>
                         </label>
 
-                        <label className="flex items-center cursor-pointer">
+                        <label className="flex items-center cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
                             <input
                                 type="radio"
                                 name="payment"
@@ -236,40 +513,40 @@ const BookSlot = () => {
                                 checked={paymenttype === 'cash on delivery'}
                                 onChange={() => selectpaymenttype('cash on delivery')}
                             />
-                            <div className="w-5 h-5 mx-3 rounded-full border border-gray-400 peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-white"></div>
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 mx-2 sm:mx-3 rounded-full border border-gray-400 peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center flex-shrink-0">
+                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white"></div>
                             </div>
-                            <HandCoinsIcon className="w-5 h-5 mr-1 text-primary" />
-                            <span>Cash on Delivery</span>
+                            <HandCoins className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary flex-shrink-0" />
+                            <span className="text-sm sm:text-base">Cash on Delivery</span>
                         </label>
 
                         {errors.paymenttype && (
-                            <p className="text-red-500 text-sm mt-2">{errors.paymenttype}</p>
+                            <p className="text-red-500 text-xs sm:text-sm mt-2">{errors.paymenttype}</p>
                         )}
                     </Card>
 
                     {/* Payment Summary */}
-                    <Card className="card-service p-8">
-                        <h3 className="text-lg font-semibold text-foreground flex items-center space-x-2">
-                            <ListOrdered className="w-5 h-5 text-primary" />
+                    <Card className="card-service p-4 sm:p-6 md:p-8 mx-2 sm:mx-0">
+                        <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center space-x-2 mb-4">
+                            <ListOrdered className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                             <span>Payment Summary</span>
                         </h3>
 
-                        <div className='flex flex-col font-normal space-y-3 md:mx-10 sm:mx-10 lg:mx-10 mx-1 my-5'>
-                            <div className='flex justify-between'>
+                        <div className='flex flex-col font-normal space-y-3 mx-2 sm:mx-4 md:mx-6 lg:mx-10 my-5'>
+                            <div className='flex justify-between text-xs sm:text-sm md:text-base'>
                                 <div>{totalcloths || 0} Cloths × ₹{ironprice}</div>
                                 <div>₹{Number(totalcloths) * ironprice}</div>
                             </div>
-                            <div className='flex justify-between'>
-                                <div>Delivery Charges</div>
-                                <div>₹{deliveryprice}</div>
+                            <div className='flex justify-between text-xs sm:text-sm md:text-base'>
+                                <div>Delivery Charges ({deliverySpeed})</div>
+                                <div>₹{deliveryCharges[deliverySpeed]}</div>
                             </div>
-                            <div className='flex justify-between pb-5'>
+                            <div className='flex justify-between pb-5 text-xs sm:text-sm md:text-base'>
                                 <div>Handling Charges</div>
                                 <div>₹{handlingcharge}</div>
                             </div>
                             <div className='w-full h-[2px] bg-gray-200'></div>
-                            <div className='flex justify-between font-medium'>
+                            <div className='flex justify-between font-medium text-sm sm:text-base md:text-lg'>
                                 <div>Total Amount</div>
                                 <div>₹{totalamount}</div>
                             </div>
@@ -280,7 +557,7 @@ const BookSlot = () => {
                             <Button
                                 onClick={handleSubmit}
                                 type="submit"
-                                className="btn-hero w-full text-lg py-4"
+                                className="btn-hero w-full text-sm sm:text-base md:text-lg py-3 sm:py-4 md:py-6"
                                 disabled={isLoading}
                             >
                                 {isLoading ? 'Saving...' : 'Proceed & Confirm Address'}
