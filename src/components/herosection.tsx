@@ -177,21 +177,27 @@ const CarouselHeroSection = ({ User }) => {
                      justify-center w-full max-w-md"
         >
           <Link to={User ? '/customer/book-slot' : '/select-role'}>
-            <Button
-              size="lg"
-              className="btn-hero text-base sm:text-lg md:text-xl 
-                         min-w-[150px] h-14 sm:py-5"
-            >
-              Book Now - Get 50% Off
-            </Button>
+           <Button
+  size="lg"
+  className="btn-hero text-base sm:text-lg md:text-xl 
+             min-w-[150px] md:min-w-[400px]
+             h-14 md:h-16 sm:py-5
+             bg-gradient-to-r 
+             text-white font-semibold
+             shadow-lg hover:shadow-2xl hover:scale-105
+             transition-all duration-300 animate-bounce-slo "
+>
+  Book Now – Get 50% Off
+</Button>
           </Link>
           <Link to="/customer/ordertrack">
             <Button
               size="lg"
               variant="outline"
               className="text-primary h-14 bg-gray-100 hover:text-white
-                         text-sm sm:text-lg min-w-[150px] py-3.5 
-                         px-[84px] md:px-10 lg:px-12 sm:px-8 hover:bg-primary"
+                         text-md sm:text-lg md:text-lg lg:text-lg 
+                          min-w-[150px] md:h-16 py-3.5
+                         px-[80px] md:px-20 lg:px-20 sm:px-8 hover:bg-primary"
             >
               Track Order
             </Button>

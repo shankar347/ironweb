@@ -119,7 +119,7 @@ const Home = () => {
   src={videoUrl}
   autoPlay
   loop
-  muted
+  // muted
   playsInline
   className="rounded-2xl shadow-lg w-full h-auto hover:scale-[1.01] transition-transform duration-300 object-cover"
 />

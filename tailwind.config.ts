@@ -13,6 +13,7 @@ export default {
       },
     },
     extend: {
+   
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -73,6 +74,10 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
+         'bounce-soft': {
+          '0%, 100%': { transform: 'translateY(-5%)', animationTimingFunction: 'ease-in-out' },
+          '50%': { transform: 'translateY(0)', animationTimingFunction: 'ease-in-out' },
+        },
         "accordion-down": {
           from: {
             height: "0",
@@ -90,9 +95,13 @@ export default {
           },
         },
       },
+     
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+       'bounce-slow': 'bounce-soft 2s infinite',
+
+
       },
     },
   },

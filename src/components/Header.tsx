@@ -26,7 +26,7 @@ const Header = () => {
             <div className="bg-primary p-2 rounded-lg">
               <Shirt className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold text-primary">Steamer</span>
+            <span className="text-2xl font-bold text-primary">Steemer</span>
           </Link>
 
           {/* Desktop Navigation */}

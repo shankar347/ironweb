@@ -36,7 +36,7 @@ const Contact = () => {
       icon: Phone,
       title: 'Phone Support',
       subtitle: 'Call us anytime',
-      action: '+91 98765 43210',
+      action: '+91  6383148182',
       color: 'from-blue-500 to-sky-400',
       delay: 0
     },
@@ -44,7 +44,7 @@ const Contact = () => {
       icon: Mail,
       title: 'Email Support',
       subtitle: '24/7 response',
-      action: 'support@steamer.com',
+      action: 'steemerservicescontactin@gmail.com',
       color: 'from-purple-500 to-pink-400',
       delay: 200
     },
@@ -68,12 +68,12 @@ const Contact = () => {
   ];
 
   const serviceAreas = [
-    'West Tambaram',
-    'East Tambaram',
-    'Selaiyur',
-    'New Perungalathur',
-    'Chitlapakkam',
-  ];
+  "east tambaram",
+  "west tambaram",
+  "krishna nagar",
+  "new perungalathur",
+  "old perungalathur"
+];
 
   const faqs = [
     {
@@ -181,7 +181,7 @@ from-blue-400 via-blue-700 to-sky-500
                   onMouseEnter={() => setActiveCard(index)}
                   onClick={() => {
                     if (method.title === 'WhatsApp') {
-                      window.open('https://wa.me/919876543210', '_blank');
+                      window.open('https://wa.me/6383148182', '_blank');
                     } else if (method.title === 'Phone Support') {
                       window.open('tel:+919876543210');
                     } else if (method.title === 'Email Support') {

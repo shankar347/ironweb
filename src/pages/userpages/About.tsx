@@ -15,11 +15,33 @@ import {
   Phone
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { API_URL } from '../../hooks/tools';
 
 const About = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [activeValue, setActiveValue] = useState(0);
   const [activeContact, setActiveContact] = useState(0);
+
+  const [videoUrl, setVideoUrl] = useState('');
+
+   useEffect(() => {
+      const getvideo = async () => {
+        try {
+          const res = await fetch(`${API_URL}/user/homevideo`, {
+            credentials: 'include',
+          });
+          const data = await res.json();
+          if (res.ok && data?.data?.video) {
+            setVideoUrl(data.data.video);
+          }
+          console.log(data);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+      getvideo();
+    }, []);
+  
 
   useEffect(() => {
     setIsVisible(true);
@@ -68,14 +90,14 @@ const About = () => {
       icon: Phone,
       title: 'Customer Support',
       subtitle: 'Available 8 AM - 8 PM Daily',
-      action: '+91 98765 43210',
+      action: '+91  6383148182',
       color: 'from-blue-500 to-sky-400'
     },
     {
       icon: Mail,
       title: 'Business Inquiries',
       subtitle: 'Partnership & Franchise',
-      action: 'business@steamer.com',
+      action: 'steemerservicescontactin@gmail.com',
       color: 'from-sky-400 to-blue-600'
     },
     {
@@ -132,13 +154,12 @@ const About = () => {
                 Our Mission
               </h2>
               <p className="text-lg sm:text-xl text-slate-600 mb-4 sm:mb-6 leading-relaxed">
-                At Steamer, we believe everyone deserves perfectly pressed clothes without the hassle.
-                Founded in 2024, we set out to revolutionize garment care in Chennai with professional
-                steaming services that fit into your busy lifestyle.
+               Steemer is a modern garment care startup that brings professional ironing and doorstep delivery to your neighborhood  faster, smarter, and more affordable.
+               We understand how important your clothes are. Our team irons every garment with care, the right temperature, and professional precision ensuring your outfits stay fresh, neat, and damage-free
+              
               </p>
               <p className="text-base sm:text-lg text-slate-600 mb-6 sm:mb-8 leading-relaxed">
-                Our mission is to provide convenient, affordable, and high-quality garment care services
-                while creating employment opportunities for local delivery partners.
+               At Steemer, we care for your clothes like they’re our own — because quality and trust come first.
               </p>
 
               <div className="space-y-3 sm:space-y-4">
@@ -157,16 +178,22 @@ const About = () => {
               </div>
             </div>
 
-            <div className={`relative transition-all duration-1000 transform ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
-              <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl group">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-sky-500/20 group-hover:opacity-0 transition-opacity duration-500"></div>
-                <img
-                  src={happyCustomers}
-                  alt="Our team and happy customers"
-                  className="w-full h-64 sm:h-80 md:h-96 lg:h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 border-4 border-blue-500/20 rounded-2xl sm:rounded-3xl group-hover:border-sky-500/40 transition-all duration-500"></div>
-              </div>
+          <div className="relative h-full">
+              {videoUrl ? (
+               <video
+  src={videoUrl}
+  autoPlay
+  loop
+  playsInline
+  className="rounded-2xl shadow-lg w-full h-full
+   hover:scale-[1.01] transition-transform duration-300 object-cover"
+/>
+
+              ) : (
+                <div className="w-full h-64 bg-gray-200 flex items-center justify-center rounded-2xl shadow-lg text-gray-500">
+                  Loading video...
+                </div>
+              )}
             </div>
           </div>
         </div>

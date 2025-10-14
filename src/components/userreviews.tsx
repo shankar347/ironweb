@@ -35,7 +35,7 @@ export default function TestimonialsSection() {
   {
     name: "Divya Shankar",
     role: "Doctor",
-    rating: 5,
+    rating: 4,
     review: "As a doctor, I hardly have time for laundry. Steamer makes life easy. My coats and uniforms are always spotless and crisp. Highly reliable!",
     avatar: "DS",
     color: "from-cyan-400 to-blue-600"
@@ -59,7 +59,7 @@ export default function TestimonialsSection() {
   {
     name: "Saravanan Babu",
     role: "Corporate Executive",
-    rating: 5,
+    rating: 4,
     review: "Steamer’s pickup and delivery are seamless. I get perfectly pressed clothes every single time. Highly professional and reliable!",
     avatar: "SB",
     color: "from-blue-300 to-blue-600"
@@ -67,7 +67,7 @@ export default function TestimonialsSection() {
   {
     name: "Nithya Raj",
     role: "Fashion Designer",
-    rating: 5,
+    rating: 4,
     review: "As a designer, I trust only Steamer with my fabrics. They handle delicate materials like silk and chiffon perfectly. Excellent service!",
     avatar: "NR",
     color: "from-indigo-400 to-blue-600"
@@ -83,7 +83,7 @@ export default function TestimonialsSection() {
   {
     name: "Sowmya Suresh",
     role: "Architect",
-    rating: 5,
+    rating: 4,
     review: "My clothes are always handled with care. The finish is excellent. The convenience of home delivery makes it even better.",
     avatar: "SS",
     color: "from-sky-400 to-indigo-600"
@@ -99,7 +99,7 @@ export default function TestimonialsSection() {
   {
     name: "Kavitha Arun",
     role: "College Professor",
-    rating: 5,
+    rating: 4,
     review: "I love how neat my cotton sarees look after using Steamer. The fabric feels fresh and crisp. Their attention to detail is impressive.",
     avatar: "KA",
     color: "from-sky-400 to-blue-500"
@@ -123,7 +123,7 @@ export default function TestimonialsSection() {
   {
     name: "Gokul Krishna",
     role: "Student",
-    rating: 5,
+    rating: 4,
     review: "Affordable and fast! I use Steamer before presentations and interviews. My clothes always look professional and neat.",
     avatar: "GK",
     color: "from-blue-400 to-indigo-500"
@@ -363,7 +363,7 @@ export default function TestimonialsSection() {
                                         {/* Stars */}
                                         <div className="flex space-x-1 mb-4">
                                             {[...Array(testimonial.rating)].map((_, i) => (
-                                                <Star key={i} className="w-5 h-5 fill-blue-500 text-blue-500" />
+                                                <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                                             ))}
                                         </div>
 
