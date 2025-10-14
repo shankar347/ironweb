@@ -7,88 +7,249 @@ export default function TestimonialsSection() {
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
     const [isVisible, setIsVisible] = useState(false);
 
-    const testimonials = [
-        {
-            name: "Priya Sharma",
-            role: "Marketing Manager",
-            rating: 5,
-            review: "Excellent service! My clothes came back perfectly pressed and the delivery was super fast. The attention to detail is remarkable. Highly recommended!",
-            avatar: "PS",
-            color: "from-blue-400 to-blue-600"
-        },
-        {
-            name: "Rajesh Kumar",
-            role: "Business Owner",
-            rating: 5,
-            review: "Amazing quality and very convenient. No more worrying about ironing - Steamer takes care of everything! Their professional team is truly outstanding.",
-            avatar: "RK",
-            color: "from-sky-400 to-blue-500"
-        },
-        {
-            name: "Meera Patel",
-            role: "Software Engineer",
-            rating: 5,
-            review: "Professional service with neat packaging. The pricing is very reasonable and the staff is courteous. I'm impressed by their efficiency and care.",
-            avatar: "MP",
-            color: "from-blue-500 to-indigo-600"
-        },
-        {
-            name: "Arjun Mehta",
-            role: "Doctor",
-            rating: 5,
-            review: "Best steaming service in the city! They handle my formal wear with such precision. The 3-hour delivery promise is always kept. Absolutely fantastic!",
-            avatar: "AM",
-            color: "from-cyan-400 to-blue-600"
-        },
-        {
-            name: "Ananya Desai",
-            role: "Fashion Designer",
-            rating: 5,
-            review: "As someone who works with fabrics daily, I'm extremely particular about garment care. Steamer exceeds my expectations every single time. Their expertise shows!",
-            avatar: "AD",
-            color: "from-blue-400 to-indigo-500"
-        },
-        {
-            name: "Vikram Singh",
-            role: "Corporate Executive",
-            rating: 5,
-            review: "Reliable and efficient! I travel frequently for work, and Steamer ensures my suits are always presentation-ready. Their pickup and delivery system is seamless.",
-            avatar: "VS",
-            color: "from-sky-500 to-blue-700"
-        },
-        {
-            name: "Kavya Reddy",
-            role: "Interior Designer",
-            rating: 5,
-            review: "The quality of steaming is exceptional. My delicate fabrics are handled with care, and everything comes back looking brand new. Worth every penny!",
-            avatar: "KR",
-            color: "from-blue-300 to-blue-600"
-        },
-        {
-            name: "Sanjay Gupta",
-            role: "Restaurant Owner",
-            rating: 5,
-            review: "I use Steamer for all my staff uniforms. Bulk orders are handled professionally, and the turnaround time is impressive. Great service for businesses!",
-            avatar: "SG",
-            color: "from-indigo-400 to-blue-600"
-        },
-        {
-            name: "Deepika Iyer",
-            role: "Lawyer",
-            rating: 5,
-            review: "Punctual, professional, and perfect results every time. The convenience of doorstep service saves me so much time. Steamer is now my go-to solution!",
-            avatar: "DI",
-            color: "from-blue-500 to-cyan-600"
-        },
-        {
-            name: "Aditya Nair",
-            role: "Photographer",
-            rating: 5,
-            review: "Outstanding attention to detail! They even folded my clothes in a specific way when I requested it. Customer service is top-notch. Highly professional team!",
-            avatar: "AN",
-            color: "from-sky-400 to-indigo-600"
-        }
-    ];
+ const testimonials = [
+  {
+    name: "Karthik Subramanian",
+    role: "Software Engineer",
+    rating: 5,
+    review: "Steamer service is excellent! My office clothes always come back neat and fresh. Pickup and delivery are always on time. Super convenient for IT professionals.",
+    avatar: "KS",
+    color: "from-blue-400 to-blue-600"
+  },
+  {
+    name: "Lakshmi Priya",
+    role: "Teacher",
+    rating: 5,
+    review: "I’m really happy with Steamer. My sarees and cotton dresses look perfect after steaming. They handle everything with so much care.",
+    avatar: "LP",
+    color: "from-sky-400 to-blue-500"
+  },
+  {
+    name: "Arun Raj",
+    role: "Entrepreneur",
+    rating: 5,
+    review: "Best steaming service in Chennai! Their team is professional and the quality is unbeatable. My suits and blazers always look brand new.",
+    avatar: "AR",
+    color: "from-blue-500 to-indigo-600"
+  },
+  {
+    name: "Divya Shankar",
+    role: "Doctor",
+    rating: 5,
+    review: "As a doctor, I hardly have time for laundry. Steamer makes life easy. My coats and uniforms are always spotless and crisp. Highly reliable!",
+    avatar: "DS",
+    color: "from-cyan-400 to-blue-600"
+  },
+  {
+    name: "Vignesh Ramesh",
+    role: "Photographer",
+    rating: 5,
+    review: "Their steaming is perfect for my shoot costumes. Clothes stay wrinkle-free and ready for clients. Love the prompt delivery service.",
+    avatar: "VR",
+    color: "from-blue-400 to-indigo-500"
+  },
+  {
+    name: "Meena Karthik",
+    role: "Homemaker",
+    rating: 5,
+    review: "Very satisfied! My husband’s office wear and kids’ uniforms look amazing. The packaging is neat and delivery is always on time.",
+    avatar: "MK",
+    color: "from-sky-500 to-blue-700"
+  },
+  {
+    name: "Saravanan Babu",
+    role: "Corporate Executive",
+    rating: 5,
+    review: "Steamer’s pickup and delivery are seamless. I get perfectly pressed clothes every single time. Highly professional and reliable!",
+    avatar: "SB",
+    color: "from-blue-300 to-blue-600"
+  },
+  {
+    name: "Nithya Raj",
+    role: "Fashion Designer",
+    rating: 5,
+    review: "As a designer, I trust only Steamer with my fabrics. They handle delicate materials like silk and chiffon perfectly. Excellent service!",
+    avatar: "NR",
+    color: "from-indigo-400 to-blue-600"
+  },
+  {
+    name: "Pradeep Kumar",
+    role: "Bank Manager",
+    rating: 5,
+    review: "Steamer’s quality is top-class. Shirts and trousers come back looking sharp. It’s a time-saver for working people like me.",
+    avatar: "PK",
+    color: "from-blue-500 to-cyan-600"
+  },
+  {
+    name: "Sowmya Suresh",
+    role: "Architect",
+    rating: 5,
+    review: "My clothes are always handled with care. The finish is excellent. The convenience of home delivery makes it even better.",
+    avatar: "SS",
+    color: "from-sky-400 to-indigo-600"
+  },
+  {
+    name: "Manikandan Selvam",
+    role: "Hotel Owner",
+    rating: 5,
+    review: "I use Steamer for my staff uniforms. They manage bulk orders perfectly and the results are consistently good. Highly recommended!",
+    avatar: "MS",
+    color: "from-blue-400 to-blue-600"
+  },
+  {
+    name: "Kavitha Arun",
+    role: "College Professor",
+    rating: 5,
+    review: "I love how neat my cotton sarees look after using Steamer. The fabric feels fresh and crisp. Their attention to detail is impressive.",
+    avatar: "KA",
+    color: "from-sky-400 to-blue-500"
+  },
+  {
+    name: "Ravi Chandran",
+    role: "Businessman",
+    rating: 5,
+    review: "The best thing about Steamer is their speed. I always get my clothes back within a few hours and they look perfect. Totally worth it!",
+    avatar: "RC",
+    color: "from-blue-500 to-indigo-600"
+  },
+  {
+    name: "Anitha Balaji",
+    role: "Interior Designer",
+    rating: 5,
+    review: "Steamer handles delicate fabrics beautifully. Even my designer dresses come back looking flawless. I trust them completely.",
+    avatar: "AB",
+    color: "from-cyan-400 to-blue-600"
+  },
+  {
+    name: "Gokul Krishna",
+    role: "Student",
+    rating: 5,
+    review: "Affordable and fast! I use Steamer before presentations and interviews. My clothes always look professional and neat.",
+    avatar: "GK",
+    color: "from-blue-400 to-indigo-500"
+  },
+  {
+    name: "Sangeetha Raj",
+    role: "Event Planner",
+    rating: 5,
+    review: "I depend on Steamer for all my event outfits. They understand urgency and always deliver on time. Fantastic service!",
+    avatar: "SR",
+    color: "from-sky-500 to-blue-700"
+  },
+  {
+    name: "Hari Prasad",
+    role: "Engineer",
+    rating: 5,
+    review: "Clothes are handled with care and look professionally finished. I really appreciate their punctuality and smooth service.",
+    avatar: "HP",
+    color: "from-blue-300 to-blue-600"
+  },
+  {
+    name: "Revathi Moorthy",
+    role: "HR Manager",
+    rating: 5,
+    review: "I tried Steamer once and never looked back. The results are consistent and the service is hassle-free. Excellent experience!",
+    avatar: "RM",
+    color: "from-indigo-400 to-blue-600"
+  },
+  {
+    name: "Senthil Kumar",
+    role: "Business Consultant",
+    rating: 5,
+    review: "I’ve recommended Steamer to all my colleagues. My formals look perfect every time. Truly a professional service!",
+    avatar: "SK",
+    color: "from-blue-500 to-cyan-600"
+  },
+  {
+    name: "Janani R",
+    role: "Graphic Designer",
+    rating: 5,
+    review: "Their service is quick, neat, and affordable. I love how my clothes are packed and returned. Definitely Chennai’s best!",
+    avatar: "JR",
+    color: "from-sky-400 to-indigo-600"
+  },
+  {
+    name: "Balaji Narayan",
+    role: "Restaurant Manager",
+    rating: 5,
+    review: "Steamer handles our restaurant uniforms with care. Bulk orders are completed without delay. Great experience!",
+    avatar: "BN",
+    color: "from-blue-400 to-blue-600"
+  },
+  {
+    name: "Gayathri Vishnu",
+    role: "Lawyer",
+    rating: 5,
+    review: "The crisp finish of my formal sarees is amazing. Pickup and delivery are always prompt. I really appreciate their professionalism.",
+    avatar: "GV",
+    color: "from-sky-400 to-blue-500"
+  },
+  {
+    name: "Kiran Raj",
+    role: "Fitness Trainer",
+    rating: 5,
+    review: "My sportswear and uniforms are always fresh and odor-free. Great job by the Steamer team. Highly satisfied!",
+    avatar: "KR",
+    color: "from-blue-500 to-indigo-600"
+  },
+  {
+    name: "Malathi R",
+    role: "Bank Officer",
+    rating: 5,
+    review: "I’ve been using Steamer for months now. They are reliable, affordable, and their work is spotless. Great for working women!",
+    avatar: "MR",
+    color: "from-cyan-400 to-blue-600"
+  },
+  {
+    name: "Aravind S",
+    role: "Civil Engineer",
+    rating: 5,
+    review: "Excellent quality and packaging. My formal shirts and pants are perfectly pressed. Will continue using their service!",
+    avatar: "AS",
+    color: "from-blue-400 to-indigo-500"
+  },
+  {
+    name: "Bhuvana Devi",
+    role: "Entrepreneur",
+    rating: 5,
+    review: "I love their eco-friendly steaming process. My delicate materials are safe with them. Chennai needed a service like this!",
+    avatar: "BD",
+    color: "from-sky-500 to-blue-700"
+  },
+  {
+    name: "Manoj Varun",
+    role: "Digital Marketer",
+    rating: 5,
+    review: "Steamer saves me hours every week. Their 3-hour delivery promise is real. Clothes come back wrinkle-free and fresh!",
+    avatar: "MV",
+    color: "from-blue-300 to-blue-600"
+  },
+  {
+    name: "Keerthana R",
+    role: "Nurse",
+    rating: 5,
+    review: "Even after long shifts, I don’t have to worry about laundry. Steamer keeps my uniforms clean and well-pressed always.",
+    avatar: "KR",
+    color: "from-indigo-400 to-blue-600"
+  },
+  {
+    name: "Sundar M",
+    role: "Artist",
+    rating: 5,
+    review: "They really care about presentation. My costumes for art shows always come back perfect. Excellent customer service too!",
+    avatar: "SM",
+    color: "from-blue-500 to-cyan-600"
+  },
+  {
+    name: "Devi Shree",
+    role: "Fashion Blogger",
+    rating: 5,
+    review: "Steamer makes my outfits look flawless for every photoshoot. I absolutely love their professional approach and neat results!",
+    avatar: "DS",
+    color: "from-sky-400 to-indigo-600"
+  }
+];
+
 
     const itemsPerPage = 3;
     const totalPages = Math.ceil(testimonials.length / itemsPerPage);

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Package, DollarSign, Clock, CheckCircle, X, QrCode, User, Phone, MapPin, Box } from 'lucide-react';
+import { Package, DollarSign, Clock, CheckCircle, X, QrCode, User, Phone, MapPin, Box, CopyrightIcon, Copyleft, Copy } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
+import { toast } from 'react-toastify';
+import { Button } from '../../components/ui/button';
 
 // Replace with actual API URL
 
@@ -224,9 +226,39 @@ const Agenthome: React.FC = () => {
 
         const customerName = order?.user_name || 'N/A';
         const customerPhone = order?.user_phoneno || 'N/A';
-        const customerAddress = order.user_address?.address ||
-            `${order.user_address?.street || ''} ${order.user_address?.city || ''} ${order.user_address?.state || ''} ${order.user_address?.pincode || ''}`.trim() ||
-            'N/A';
+        const customerAddress = `${order.user_address?.houseno || ''}, ${order.user_address?.streetname}, ${order.user_address?.area || ''}, ${order.user_address?.city || ''} , ${order.user_address?.pincode || ''}` 
+
+        const  handleCopyphone=()=>{
+            navigator.clipboard.writeText(customerPhone).then(()=>{
+                toast.success('Phoneno copied to clipboard')
+            })
+            .catch((err)=>{
+                console.log(err)
+
+                toast.error("Error in copy the phoneno")
+            })
+        }
+
+
+
+        const  handleCopyaddress=()=>{
+            // console.log(customerAddress)
+            navigator.clipboard.writeText(customerAddress).then(()=>{
+                toast.success('Address copied to clipboard')
+            })
+            .catch((err)=>{
+                console.log(err)
+
+                toast.error("Error in copy the Address")
+            })
+        }
+
+const handleOpenMap = () => {
+  const encodedAddress = encodeURIComponent(customerAddress);
+  const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
+
+  window.open(mapUrl,'_blank'); // Opens in same tab
+};
 
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
@@ -262,31 +294,39 @@ const Agenthome: React.FC = () => {
                             <div className={`${GRADIENT_CLASS} p-2 rounded-lg shadow-md`}>
                                 <Phone className="w-5 h-5 text-white" />
                             </div>
-                            <div className="flex-1">
+                           <div className='flex flex-1 justify-between'>
+  <div className="flex-1">
                                 <p className="text-xs text-gray-600 mb-1">Phone Number</p>
                                 <p className="font-semibold text-gray-800">{customerPhone}</p>
                             </div>
+                            <Copy onClick={()=>handleCopyphone()} className='text-primary cursor-pointer mt-1 w-4 h-4' />
+                           </div>
                         </div>
 
                         <div className="flex items-start space-x-3">
                             <div className={`${GRADIENT_CLASS} p-2 rounded-lg shadow-md`}>
                                 <MapPin className="w-5 h-5 text-white" />
                             </div>
+                              <div className='flex flex-1 justify-between'>
                             <div className="flex-1">
                                 <p className="text-xs text-gray-600 mb-1">Address</p>
                                 <p className="font-semibold text-gray-800 leading-relaxed">{customerAddress}</p>
-                                {order.user_address?.landmark && (
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        <span className="font-medium">Landmark:</span> {order.user_address.landmark}
-                                    </p>
-                                )}
                             </div>
+                            <Copy onClick={()=>handleCopyaddress()} className='text-primary cursor-pointer mt-1 w-4 h-4' />
+                            {/* <Copy/> */}
+                              </div>
+                        </div>
+                        <div className='flex flex-col items-center justify-center flex-1'>
+                             <Button 
+                        onClick={()=>handleOpenMap()}
+                        className={`${GRADIENT_CLASS}  rounded-lg shadow-md
+                        w-[90%]  `} >Track Order </Button>
                         </div>
                     </div>
 
                     <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 mb-6">
                         <p className="text-sm text-gray-600 mb-1">Order ID</p>
-                        <p className="font-mono text-lg font-semibold text-gray-800">{order._id}</p>
+                        <p className="font-mono text-lg font-semibold text-gray-800"> #{order._id.slice(-8)}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mb-6">

@@ -280,10 +280,10 @@ const AdminUserPage: React.FC = () => {
                 header: 'Address',
                 key: 'address',
                 render: (row: User) => (
-                    <div className="space-y-1 max-w-xs">
+                    <div className="space-y-1 max-w-sm">
                         <div className="flex items-start gap-2">
                             <MapPin size={16} className="text-gray-400 mt-1 flex-shrink-0" />
-                            <div className="text-sm text-gray-700">
+                            <div className="text-sm   text-gray-700">
                                 <div>{row.address.houseno}, {row.address.streetname}</div>
                                 <div>{row.address.area}, {row.address.city}</div>
                                 <div className="text-gray-500">PIN: {row.address.pincode}</div>

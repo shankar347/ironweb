@@ -156,7 +156,7 @@ const Agentprofile = () => {
                                                    onClick={() => setShowLogoutModal(true)}
                                                    className="flex-1 bg-gradient-to-r from-red-600 to-red-500 
                                                        hover:from-red-700 hover:to-red-600 text-white font-semibold 
-                                                       py-6 px-4 rounded-lg sm:rounded-xl shadow-lg 
+                                                       md:py-6 px-4 rounded-lg sm:rounded-xl shadow-lg 
                                                        transform transition-all duration-300 hover:scale-105 
                                                        hover:-translate-y-1 text-sm sm:text-base
                                                        active:scale-95 touch-manipulation"

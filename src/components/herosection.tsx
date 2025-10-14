@@ -76,15 +76,26 @@ const CarouselHeroSection = ({ User }) => {
     >
       {/* Background Images */}
       {slides.map((slide, index) => (
-        <div
-          key={index}
-          className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
-          style={{
-            backgroundImage: `url(${slide.image})`,
-            opacity: index === currentSlide ? 0.5 : 0,
-            zIndex: 0,
-          }}
-        />
+    <div
+  key={index}
+  className="
+    absolute inset-0
+    bg-no-repeat
+    bg-center
+    bg-cover
+    sm:bg-cover
+    md:bg-cover
+    lg:bg-cover
+    transition-opacity
+    duration-1000
+  "
+  style={{
+    backgroundImage: `url(${slide.image})`,
+    opacity: index === currentSlide ? 0.5 : 0,
+    zIndex: 0,
+  }}
+/>
+
       ))}
 
       {/* Navigation Arrows (only show if more than one slide) */}

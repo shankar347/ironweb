@@ -2,10 +2,10 @@ import { useContext, useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Shirt, ShoppingCart, Clock, Wallet, CreditCard, HandCoins, ListOrdered, Plus, Minus, Zap, Gauge, Info } from 'lucide-react';
+import { Shirt, ShoppingCart, Clock, Wallet, CreditCard, HandCoins, ListOrdered, Plus, Minus, Zap, Gauge, Info, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
-import { SteamContext } from '../../hooks/steamcontext';
+import { SteamContext } from '@/hooks/steamcontext';
 import Select from "react-select";
 
 const BookSlot = () => {
@@ -17,7 +17,7 @@ const BookSlot = () => {
     const [isinputon, setisinputon] = useState(false);
     const [paymenttype, selectpaymenttype] = useState('');
     const [totalamount, settotalamount] = useState(0);
-    const [deliverySpeed, setDeliverySpeed] = useState<'normal' | 'speed' | 'lightning'>('normal');
+    const [deliverySpeed, setDeliverySpeed] = useState<'normal' | 'Express' | 'lightning'>('normal');
     const [hoveredSpeed, setHoveredSpeed] = useState<string | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -38,31 +38,31 @@ const BookSlot = () => {
 
     const deliveryCharges = {
         normal: 20,
-        speed: 35,
+        Express: 35,
         lightning: 45
     };
 
     const speedInfo = {
         normal: {
             title: "Normal Delivery",
-            description: "Standard 3-hour time slots. Best for planned schedules.",
+            description: "Standard 7-hour time slots. Best for planned schedules.",
             icon: Shirt,
             color: "blue",
-            bufferMinutes: 90
+            bufferHours: 3
         },
-        speed: {
+        Express: {
             title: "Speed Delivery",
-            description: "Quick 1.5-hour slots. Faster service with moderate priority.",
+            description: "Quick 3-hour slots. Faster service with moderate priority.",
             icon: Gauge,
             color: "orange",
-            bufferMinutes: 60
+            bufferHours: 2
         },
         lightning: {
             title: "Lightning Delivery",
-            description: "Express 1-hour slots. Highest priority and fastest service!",
+            description: "Express 1.5-hour slots. Highest priority and fastest service!",
             icon: Zap,
             color: "purple",
-            bufferMinutes: 30
+            bufferHours: 1
         }
     };
 
@@ -89,38 +89,69 @@ const BookSlot = () => {
     };
 
     const isSlotAvailable = (slot: string) => {
-        const { startHour, endHour } = parseTimeSlot(slot);
+        const { endHour } = parseTimeSlot(slot);
         const now = currentTime;
         const currentHour = now.getHours();
         const currentMinutes = now.getMinutes();
-        const currentTotalMinutes = currentHour * 60 + currentMinutes;
-        const endTotalMinutes = endHour * 60;
-        const bufferMinutes = speedInfo[deliverySpeed].bufferMinutes;
+        const bufferHours = 3; // Fixed 3-hour freezing time before slot end
         
-        return endTotalMinutes - bufferMinutes > currentTotalMinutes;
+        // Convert current time to decimal hours for accurate comparison
+        const currentTimeDecimal = currentHour + (currentMinutes / 60);
+        const deadlineTimeDecimal = endHour - bufferHours;
+        
+        return currentTimeDecimal < deadlineTimeDecimal;
     };
 
-    const getTimeSlots = () => {
+    const getAllTimeSlots = () => {
         let allSlots: string[] = [];
         
         switch(deliverySpeed) {
             case 'normal':
-                allSlots = ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM'];
+                allSlots = ['6AM - 1PM', '1PM - 8PM'];
                 break;
-            case 'speed':
-                allSlots = ['6AM - 7:30AM', '7:30AM - 9AM', '9AM - 10:30AM', '10:30AM - 12PM', 
-                        '12PM - 1:30PM', '1:30PM - 3PM', '3PM - 4:30PM', '4:30PM - 6PM'];
+            case 'Express':
+                allSlots = ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM', '6PM - 8PM'];
                 break;
             case 'lightning':
-                allSlots = ['6AM - 7AM', '7AM - 8AM', '8AM - 9AM', '9AM - 10AM', '10AM - 11AM', 
-                        '11AM - 12PM', '12PM - 1PM', '1PM - 2PM', '2PM - 3PM', '3PM - 4PM', 
-                        '4PM - 5PM', '5PM - 6PM'];
+                allSlots = ['8AM - 9:30AM', '9:30AM - 11AM', '11AM - 12:30PM', '12:30PM - 2PM', 
+                        '2PM - 3:30PM', '3:30PM - 5PM', '5PM - 6:30PM', '6:30PM - 8PM'];
                 break;
             default:
-                allSlots = ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM'];
+                allSlots = ['6AM - 1PM', '1PM - 8PM'];
         }
         
+        return allSlots;
+    };
+
+    const getTodaySlots = () => {
+        const allSlots = getAllTimeSlots();
         return allSlots.filter(slot => isSlotAvailable(slot));
+    };
+
+    const getTomorrowSlots = () => {
+        return getAllTimeSlots();
+    };
+
+    const getCombinedSlots = () => {
+        const todaySlots = getTodaySlots();
+        
+        // If there are today slots available, only show today slots
+        if (todaySlots.length > 0) {
+            return todaySlots.map(slot => ({
+                value: slot,
+                label: slot,
+                isToday: true
+            }));
+        }
+        
+        // If no today slots, show tomorrow slots
+        const tomorrowSlots = getTomorrowSlots();
+        return tomorrowSlots.map(slot => ({
+            value: `${slot}__tomorrow`,
+            label: `${slot} (Tomorrow)`,
+            isToday: false,
+            originalSlot: slot
+        }));
     };
 
     useEffect(() => {
@@ -129,7 +160,7 @@ const BookSlot = () => {
 
     useEffect(() => {
         setSelectedSlot(null);
-    }, [deliverySpeed]);
+    }, [deliverySpeed, currentTime]);
 
     useEffect(() => {
         const deliveryprice = deliveryCharges[deliverySpeed];
@@ -163,14 +194,19 @@ const BookSlot = () => {
             return;
         }
 
+        // Extract the actual slot and check if it's tomorrow
+        const isTomorrow = selectedSlot?.includes('__tomorrow') || false;
+        const actualSlot = isTomorrow ? selectedSlot?.replace('__tomorrow', '') : selectedSlot;
+
         const updatedOrderDetails = {
             ...orderdetails,
             otherdetails: {
                 totalcloths,
-                timeslot: selectedSlot,
+                timeslot: actualSlot,
                 paymenttype,
                 totalamount,
-                deliverySpeed
+                deliverySpeed,
+                isNextDay: isTomorrow
             }
         };
 
@@ -179,8 +215,42 @@ const BookSlot = () => {
         navigate('/customer/confirmaddress');
     };
 
-    const Timeslots = getTimeSlots();
-    const options = Timeslots.map((slot) => ({ value: slot, label: slot }));
+    const allSlotOptions = getCombinedSlots();
+    const todaySlots = getTodaySlots();
+
+    const getAlternativeSpeedOptions = () => {
+        const alternatives = [];
+        const speeds: Array<'normal' | 'Express' | 'lightning'> = ['normal', 'Express', 'lightning'];
+        
+        for (const speed of speeds) {
+            if (speed !== deliverySpeed) {
+                const testSlots = speed === 'normal' 
+                    ? ['6AM - 1PM', '1PM - 8PM']
+                    : speed === 'Express'
+                    ? ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM', '6PM - 8PM']
+                    : ['8AM - 9:30AM', '9:30AM - 11AM', '11AM - 12:30PM', '12:30PM - 2PM', 
+                       '2PM - 3:30PM', '3:30PM - 5PM', '5PM - 6:30PM', '6:30PM - 8PM', '8PM - 9:30PM'];
+                
+                const currentHour = currentTime.getHours();
+                const currentMinutes = currentTime.getMinutes();
+                const currentTimeDecimal = currentHour + (currentMinutes / 60);
+                
+                const availableToday = testSlots.some(slot => {
+                    const { endHour } = parseTimeSlot(slot);
+                    const deadlineTimeDecimal = endHour - 3; // Fixed 3-hour freezing time
+                    return currentTimeDecimal < deadlineTimeDecimal;
+                });
+                
+                if (availableToday) {
+                    alternatives.push(speed);
+                }
+            }
+        }
+        
+        return alternatives;
+    };
+
+    const alternativeOptions = getAlternativeSpeedOptions();
 
     return (
         <div className="min-h-screen bg-secondary/20 py-20">
@@ -232,7 +302,7 @@ const BookSlot = () => {
                                         }`}>₹{deliveryCharges.normal}</span>
                                         <span className={`text-[10px] sm:text-xs ${
                                             deliverySpeed === 'normal' ? 'text-blue-100' : 'text-gray-500'
-                                        }`}>3 hr slots</span>
+                                        }`}>7 hr slots</span>
                                     </div>
                                     {deliverySpeed !== 'normal' && (
                                         <div className="absolute -top-1 -right-1">
@@ -257,51 +327,51 @@ const BookSlot = () => {
                             {/* Speed Delivery */}
                             <div className="relative">
                                 <button
-                                    onClick={() => setDeliverySpeed('speed')}
-                                    onMouseEnter={() => setHoveredSpeed('speed')}
+                                    onClick={() => setDeliverySpeed('Express')}
+                                    onMouseEnter={() => setHoveredSpeed('Express')}
                                     onMouseLeave={() => setHoveredSpeed(null)}
                                     className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${
-                                        deliverySpeed === 'speed' 
+                                        deliverySpeed === 'Express' 
                                             ? 'border-orange-500 bg-orange-500 shadow-lg text-white' 
                                             : 'border-orange-300 bg-white hover:border-orange-400 hover:shadow-md text-gray-700'
-                                    } ${deliverySpeed !== 'speed' ? 'hover:animate-pulse' : ''}`}
+                                    } ${deliverySpeed !== 'Express' ? 'hover:animate-pulse' : ''}`}
                                 >
                                     <div className="flex flex-col items-center space-y-1 sm:space-y-2">
                                         <Gauge className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${
-                                            deliverySpeed === 'speed' ? 'text-white' : 'text-orange-500'
-                                        } ${deliverySpeed === 'speed' ? 'animate-spin' : ''}`} 
-                                        style={{ animationDuration: deliverySpeed === 'speed' ? '3s' : 'none' }} />
+                                            deliverySpeed === 'Express' ? 'text-white' : 'text-orange-500'
+                                        } ${deliverySpeed === 'Express' ? 'animate-spin' : ''}`} 
+                                        style={{ animationDuration: deliverySpeed === 'Express' ? '2s' : 'none' }} />
                                         <span className={`font-semibold text-xs sm:text-sm md:text-base ${
-                                            deliverySpeed === 'speed' ? 'text-white' : 'text-orange-600'
+                                            deliverySpeed === 'Express' ? 'text-white' : 'text-orange-600'
                                         }`}>
-                                            Speed
+                                            Express
                                         </span>
                                         <span className={`text-xs sm:text-sm ${
-                                            deliverySpeed === 'speed' ? 'text-orange-100' : 'text-gray-600'
-                                        }`}>₹{deliveryCharges.speed}</span>
+                                            deliverySpeed === 'Express' ? 'text-orange-100' : 'text-gray-600'
+                                        }`}>₹{deliveryCharges.Express}</span>
                                         <span className={`text-[10px] sm:text-xs ${
-                                            deliverySpeed === 'speed' ? 'text-orange-100' : 'text-gray-500'
-                                        }`}>1.5 hr</span>
+                                            deliverySpeed === 'Express' ? 'text-orange-100' : 'text-gray-500'
+                                        }`}>3 hr</span>
                                     </div>
-                                    {deliverySpeed === 'speed' && (
+                                    {deliverySpeed === 'Express' && (
                                         <div className="absolute top-2 right-2">
                                             <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
                                         </div>
                                     )}
-                                    {deliverySpeed !== 'speed' && (
+                                    {deliverySpeed !== 'Express' && (
                                         <div className="absolute -top-1 -right-1">
                                             <div className="w-3 h-3 bg-orange-400 rounded-full animate-pulse"></div>
                                         </div>
                                     )}
                                 </button>
                                 
-                                {hoveredSpeed === 'speed' && (
+                                {hoveredSpeed === 'Express' && (
                                     <div className="hidden sm:block absolute z-10 w-64 p-3 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl left-1/2 transform -translate-x-1/2">
                                         <div className="flex items-start space-x-2">
                                             <Info className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                                             <div>
-                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.speed.title}</p>
-                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.speed.description}</p>
+                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.Express.title}</p>
+                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.Express.description}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -334,7 +404,7 @@ const BookSlot = () => {
                                         }`}>₹{deliveryCharges.lightning}</span>
                                         <span className={`text-[10px] sm:text-xs ${
                                             deliverySpeed === 'lightning' ? 'text-purple-100' : 'text-gray-500'
-                                        }`}>1 hr</span>
+                                        }`}>1.5 hr</span>
                                     </div>
                                     {deliverySpeed === 'lightning' && (
                                         <>
@@ -452,27 +522,78 @@ const BookSlot = () => {
                             <span>Select Time Slots</span>
                         </h3>
 
-                        {Timeslots.length > 0 ? (
+                        {todaySlots.length === 0 && (
+                            <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <Calendar className="w-5 h-5 text-amber-600" />
+                                    <p className="text-sm font-semibold text-amber-800">
+                                        No slots available today for {speedInfo[deliverySpeed].title}
+                                    </p>
+                                </div>
+                                <p className="text-xs text-amber-700 ml-7">
+                                    All slots shown below are for tomorrow. {alternativeOptions.length > 0 && "Or try a different delivery speed for today's availability."}
+                                </p>
+                            </div>
+                        )}
+
+                        {todaySlots.length === 0 && alternativeOptions.length > 0 && (
+                            <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                                <p className="text-sm font-semibold text-green-800 mb-2">
+                                    ✨ Available today with other speeds:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {alternativeOptions.map((speed) => (
+                                        <button
+                                            key={speed}
+                                            onClick={() => setDeliverySpeed(speed)}
+                                            className="px-3 py-1.5 bg-white border-2 border-green-300 rounded-lg text-xs font-medium text-green-700 hover:bg-green-50 hover:border-green-400 transition-all duration-200 transform hover:scale-105"
+                                        >
+                                            Switch to {speedInfo[speed].title}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {todaySlots.length > 0 && (
+                            <div className="mb-3 p-2 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
+                                <p className="text-xs text-green-700 font-medium">
+                                    ✓ {todaySlots.length} slot{todaySlots.length > 1 ? 's' : ''} available today
+                                </p>
+                            </div>
+                        )}
+
+                        {allSlotOptions.length > 0 ? (
                             <Select
-                                options={options}
-                                value={options.find((opt) => opt.value === selectedSlot) || null}
+                                options={allSlotOptions}
+                                value={allSlotOptions.find((opt) => opt.value === selectedSlot) || null}
                                 onChange={(selected) => setSelectedSlot(selected?.value || null)}
-                                placeholder="Book your preferred slot"
+                                placeholder="Select your preferred time slot"
                                 className="w-full text-sm"
                                 styles={{
                                     control: (base) => ({
                                         ...base,
                                         borderRadius: "0.5rem",
                                         borderColor: "#D1D5DB",
+                                        borderWidth: "1px",
                                         padding: "0.25rem",
                                         fontSize: "0.875rem"
                                     }),
+                                    option: (base, state) => ({
+                                        ...base,
+                                        backgroundColor: state.data.isToday 
+                                            ? (state.isFocused ? '#DBEAFE' : '#EFF6FF')
+                                            : (state.isFocused ? '#FEF3C7' : state.isSelected ? '#FDE68A' : 'white'),
+                                        color: state.data.isToday ? '#1E40AF' : '#92400E',
+                                        fontWeight: state.data.isToday ? '500' : '400',
+                                        cursor: 'pointer'
+                                    })
                                 }}
                             />
                         ) : (
-                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
-                                <p className="text-xs sm:text-sm text-yellow-800">
-                                    No available slots for today. Please try again tomorrow or choose a different delivery speed.
+                            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+                                <p className="text-xs sm:text-sm text-red-800">
+                                    No available slots. Please try a different delivery speed or check back tomorrow.
                                 </p>
                             </div>
                         )}
@@ -501,7 +622,7 @@ const BookSlot = () => {
                                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white"></div>
                             </div>
                             <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary flex-shrink-0" />
-                            <span className="text-sm sm:text-base">Online Payment</span>
+                            <span className="text-sm sm:text-base">Online Payment (pay after delivery) </span>
                         </label>
 
                         <label className="flex items-center cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
