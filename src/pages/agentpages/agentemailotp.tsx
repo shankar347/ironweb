@@ -179,7 +179,10 @@ const Agentemail = () => {
                                                 handleOtpChange(index, e.target.value.replace(/[^0-9]/g, ""))
                                             }
                                             onKeyDown={(e) => handleKeyDown(index, e)}
-                                            className="w-12 h-12 text-center text-xl font-semibold border-2 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                            className="
+                                            w-7 h-7 md:w-12 md:h-12
+                                            lg:w-12 lg:w-12 sm:w-12 sm:h-12 
+                                             text-center text-xl font-semibold border-2 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20"
                                             required
                                         />
                                     ))}
