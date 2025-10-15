@@ -451,6 +451,11 @@ const BookSlot = () => {
                             <span>Select No of Cloths</span>
                         </h3>
 
+                        <h3 className="text-base sm:text-lg font-bold text-foreground flex items-center space-x-2 mb-4 text-primary 
+                         ml-3">
+                       Shirts
+                       </h3>
+
                         <div className='flex justify-center flex-wrap gap-2 my-5'>
                             {buttonValues.map((btn) => (
                                 <Button
@@ -466,7 +471,7 @@ const BookSlot = () => {
                             ))}
                         </div>
 
-                        <div className='flex flex-col sm:flex-row justify-between items-center gap-4 px-2 sm:px-4'>
+                        <div className='flex flex-col mb-5 sm:flex-row justify-between items-center gap-4 px-2 sm:px-4'>
                             <div className='flex items-center space-x-3'>
                                 <Button
                                     size="sm"
@@ -509,6 +514,234 @@ const BookSlot = () => {
                                 </Button>
                             </div>
                         )}
+                        
+                       <div className="flex justify-between mx-3 items-center">
+  <div className="text-base sm:text-lg font-bold text-primary">
+    Pants
+  </div>
+
+  <div className="flex items-center space-x-3">
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Math.max(0, Number(prev) - 1)))
+      }
+    >
+      <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+
+    <div className="font-bold text-lg sm:text-xl min-w-[40px] text-center">
+      {totalcloths}
+    </div>
+
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Number(prev) + 1))
+      }
+    >
+      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+  </div>
+</div>
+
+                       <div className="flex justify-between mx-3
+                       mt-3 items-center">
+  <div className="text-base sm:text-lg font-bold text-primary">
+    Jeans / Leggings
+  </div>
+
+  <div className="flex items-center space-x-3">
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Math.max(0, Number(prev) - 1)))
+      }
+    >
+      <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+
+    <div className="font-bold text-lg sm:text-xl min-w-[40px] text-center">
+      {totalcloths}
+    </div>
+
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Number(prev) + 1))
+      }
+    >
+      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+  </div>
+</div>
+                       <div className="flex mt-3 justify-between mx-3 items-center">
+  <div className="text-base sm:text-lg font-bold text-primary">
+    Skirts
+  </div>
+
+  <div className="flex items-center space-x-3">
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Math.max(0, Number(prev) - 1)))
+      }
+    >
+      <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+
+    <div className="font-bold text-lg sm:text-xl min-w-[40px] text-center">
+      {totalcloths}
+    </div>
+
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Number(prev) + 1))
+      }
+    >
+      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+  </div>
+</div>
+
+                       <div className="flex mt-3 justify-between mx-3 items-center">
+  <div className="text-base sm:text-lg font-bold text-primary">
+    Kurtas / Kutis
+  </div>
+
+  <div className="flex items-center space-x-3">
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Math.max(0, Number(prev) - 1)))
+      }
+    >
+      <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+
+    <div className="font-bold text-lg sm:text-xl min-w-[40px] text-center">
+      {totalcloths}
+    </div>
+
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Number(prev) + 1))
+      }
+    >
+      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+  </div>
+</div>
+
+                       <div className="flex mt-3 justify-between mx-3 items-center">
+  <div className="text-base sm:text-lg font-bold text-primary">
+    Sarees
+  </div>
+
+  <div className="flex items-center space-x-3">
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Math.max(0, Number(prev) - 1)))
+      }
+    >
+      <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+
+    <div className="font-bold text-lg sm:text-xl min-w-[40px] text-center">
+      {totalcloths}
+    </div>
+
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Number(prev) + 1))
+      }
+    >
+      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+  </div>
+</div>
+
+                       <div className="flex mt-3 justify-between mx-3 items-center">
+  <div className="text-base sm:text-lg font-bold text-primary">
+    Dhotis / Veshti
+  </div>
+
+  <div className="flex items-center space-x-3">
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Math.max(0, Number(prev) - 1)))
+      }
+    >
+      <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+
+    <div className="font-bold text-lg sm:text-xl min-w-[40px] text-center">
+      {totalcloths}
+    </div>
+
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Number(prev) + 1))
+      }
+    >
+      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+  </div>
+
+</div>
+
+
+
+
+                       <div className="flex mt-3 justify-between mx-3 items-center">
+  <div className="text-base sm:text-lg font-bold text-primary">
+    Bedsheets
+  </div>
+
+  <div className="flex items-center space-x-3">
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Math.max(0, Number(prev) - 1)))
+      }
+    >
+      <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+
+    <div className="font-bold text-lg sm:text-xl min-w-[40px] text-center">
+      {totalcloths}
+    </div>
+
+    <Button
+      size="sm"
+      className="w-8 h-8 sm:w-10 sm:h-10 p-0"
+      onClick={() =>
+        setTotalcloths((prev) => String(Number(prev) + 1))
+      }
+    >
+      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+    </Button>
+  </div>
+</div>
 
                         {errors.totalcloths && (
                             <p className="text-red-500 text-xs sm:text-sm mt-2 text-center">{errors.totalcloths}</p>
