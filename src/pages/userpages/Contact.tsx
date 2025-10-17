@@ -14,6 +14,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
+import { toast } from 'react-toastify';
 
 const Contact = () => {
   const [isVisible, setIsVisible] = useState(false);
