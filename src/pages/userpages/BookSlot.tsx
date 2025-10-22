@@ -204,7 +204,7 @@ const BookSlot = () => {
 
     const getDeliveryCharge = () => {
         const totalCount = getTotalClothCount();
-        return totalCount > 10 ? 0 : deliveryCharges[deliverySpeed];
+        return totalCount > 9 ? 0 : deliveryCharges[deliverySpeed];
     };
 
     const getTotalAmount = () => {
@@ -305,7 +305,7 @@ const BookSlot = () => {
     const todaySlots = getTodaySlots();
     const alternativeOptions = getAlternativeSpeedOptions();
     const totalClothCount = getTotalClothCount();
-    const isFreeDelivery = totalClothCount > 10;
+    const isFreeDelivery = totalClothCount > 9;
 
     return (
         <div className="min-h-screen bg-secondary/20 py-20">
@@ -684,7 +684,7 @@ const BookSlot = () => {
                         </h3>
 
                         {/* Free Delivery Info */}
-                        {totalClothCount > 10 && (
+                        {totalClothCount > 9 && (
                             <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-300">
                                 <div className="flex items-center space-x-2">
                                     <Gift className="w-5 h-5 text-green-600 flex-shrink-0" />
@@ -701,16 +701,16 @@ const BookSlot = () => {
                         )}
 
                         {/* Delivery Charge Info */}
-                        {totalClothCount > 0 && totalClothCount <= 10 && (
+                        {totalClothCount > 0 && totalClothCount <= 9 && (
                             <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                                 <div className="flex items-center space-x-2">
                                     <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />
                                     <div>
                                         <p className="text-sm font-medium text-blue-800">
-                                            Add {11 - totalClothCount} more item{11 - totalClothCount > 1 ? 's' : ''} to get FREE delivery!
+                                            Add {10 - totalClothCount} more item{10 - totalClothCount > 1 ? 's' : ''} to get FREE delivery!
                                         </p>
                                         <p className="text-xs text-blue-700 mt-1">
-                                            Current: {totalClothCount} items | Need: 11+ items
+                                            Current: {totalClothCount} items | Need: 10+ items
                                         </p>
                                     </div>
                                 </div>
