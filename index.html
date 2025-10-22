@@ -1,40 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Site Title & Description -->
-    <title>Steemer - Professional Ironing & Steaming Service</title>
-    <meta name="description" content="Steemer provides fast and professional ironing and steaming services with doorstep pickup & delivery in Chennai. ₹14/item. Get your clothes perfectly pressed in 3 hours!" />
-    <meta name="keywords" content="ironing service, steaming service, laundry, Chennai, West Tambaram, doorstep pickup, professional pressing" />
-    <meta name="author" content="Steemer" />
-    
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.png" type="image/png" />
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://steemer.in" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steemer - Professional Ironing & Steaming Service</title>
+  <meta name="description" content="Steemer provides fast and professional ironing and steaming services with doorstep pickup & delivery in Chennai. ₹14/item. Get your clothes perfectly pressed in 3 hours!" />
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:title" content="Steemer - Professional Ironing & Steaming Service" />
-    <meta property="og:description" content="Get your clothes professionally steamed and delivered in 3 hours. ₹14/item with doorstep pickup & delivery in Chennai." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://steemer.in" />
-    <meta property="og:image" content="https://steemer.in/assets/logo.png" />
+  <!-- ✅ Favicons -->
+  <link rel="icon" href="https://www.steemer.in/assets/logo.png" type="image/png" />
+  <link rel="shortcut icon" href="https://www.steemer.in/assets/logo.png" type="image/png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="https://www.steemer.in/assets/logo.png" />
+  <link rel="manifest" href="/manifest.json" />
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Steemer - Professional Ironing & Steaming Service" />
-    <meta name="twitter:description" content="Fast and professional ironing & steaming service in Chennai. ₹10/item with doorstep pickup & delivery in 3 hours." />
-    <meta name="twitter:image" content="https://steemer.in/assets/logo.png" />
-    
-  </head>
-  
-  <body>
-    <div id="root"></div>
-    
-    <!-- Your main script -->
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <!-- ✅ Theme Colors -->
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="msapplication-TileColor" content="#ffffff" />
+
+  <!-- ✅ Open Graph / Facebook -->
+  <meta property="og:title" content="Steemer - Professional Ironing & Steaming Service" />
+  <meta property="og:description" content="Fast & professional ironing and steaming in Chennai. Doorstep pickup & delivery in 3 hours!" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.steemer.in" />
+  <meta property="og:image" content="https://www.steemer.in/assets/logo.png" />
+  <meta property="og:site_name" content="Steemer" />
+
+  <!-- ✅ Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Steemer - Professional Ironing & Steaming Service" />
+  <meta name="twitter:description" content="Doorstep ironing and steaming in 3 hours – ₹14/item in Chennai." />
+  <meta name="twitter:image" content="https://www.steemer.in/assets/logo.png" />
+
+  <!-- ✅ JSON-LD: Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Steemer",
+    "url": "https://www.steemer.in",
+    "logo": "https://www.steemer.in/assets/logo.png",
+    "sameAs": [
+      "https://www.facebook.com/steemer.in",
+      "https://www.instagram.com/steemer.in"
+    ]
+  }
+  </script>
+
+  <!-- ✅ JSON-LD: Local Business -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Steemer - Ironing & Steaming Service",
+    "image": "https://www.steemer.in/assets/logo.png",
+    "@id": "https://www.steemer.in",
+    "url": "https://www.steemer.in",
+    "telephone": "+91XXXXXXXXXX",
+    "priceRange": "₹₹",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "West Tambaram",
+      "addressLocality": "Chennai",
+      "addressRegion": "TN",
+      "postalCode": "600045",
+      "addressCountry": "IN"
+    },
+    "openingHours": "Mo-Su 09:00-21:00",
+    "description": "Professional ironing and steaming service in Chennai. Doorstep pickup & delivery within 3 hours for ₹14/item."
+  }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- ✅ Main Script -->
+  <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>

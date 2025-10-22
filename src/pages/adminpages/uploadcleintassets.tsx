@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Upload, Image, Video, CheckCircle, AlertCircle, X, Edit2, Trash2 } from 'lucide-react';
+import { Upload, Image, Video, CheckCircle, AlertCircle, X, Edit2, Trash2, Shirt, ShirtIcon } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
 import { toast } from 'react-toastify';
 
@@ -24,6 +24,136 @@ const UploadClientAssets = () => {
   const [banners, setBanners] = useState([]);
   const [editingBanner, setEditingBanner] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  
+  const [Itemlist,setItemlist]=useState([])
+  const [name,setname]=useState('')
+  const [price,setprice]=useState('')
+  const [isItemuploading,setisitemuploading]=useState(false)
+  const [isItemedit,setIsitemEdit]=useState(false)
+  const [selectedItem,setSelectedItem]=useState(null)
+
+  const getbookItems=async()=>{
+   try {
+      const res = await fetch(`${API_URL}/admin/getbookitems`, {
+        credentials: 'include', 
+      });
+      const data = await res.json();
+      
+      if (data?.data)
+      {
+        setItemlist(data?.data)
+      }
+    } catch (err) {
+      toast.error("Error in fetching book items");
+    }   
+  }
+
+
+  const handleItemedit=(item)=>{
+    setSelectedItem(item)
+    setIsitemEdit(true)
+    setname(item.name)
+    setprice(item.price)
+  }
+
+  const cancelItemedit=()=>{
+    setSelectedItem(null)
+    setIsitemEdit(false)
+    setname('')
+    setprice('')
+  }
+
+
+  
+  const editbookItems=async()=>{
+   try {
+    setisitemuploading(true)
+      const res = await fetch(`${API_URL}/admin/editbookitems/${selectedItem?._id}`, {
+        credentials: 'include',
+        method:'PUT',
+        headers:{
+          'content-type':'application/json'
+        },
+        body:JSON.stringify({
+          name,
+          price
+        })
+      });
+      const data = await res.json();
+     
+      if (data?.message)
+      {
+        setSelectedItem(null)
+        getbookItems()
+        setname('')
+        setprice('')
+        setIsitemEdit(false)
+        toast.success(data?.message)
+        setisitemuploading(false)
+      }
+
+    } catch (err) {
+      toast.error("Error in fetching banners");
+    }
+  }
+
+
+  const createbookItems=async()=>{
+   try {
+    setisitemuploading(true)
+      const res = await fetch(`${API_URL}/admin/createbookitems`, {
+        credentials: 'include',
+        method:'POST',
+        headers:{
+          'content-type':'application/json'
+        },
+        body:JSON.stringify({
+          name,
+          price
+        })
+      });
+      const data = await res.json();
+     
+      if (data?.message)
+      {
+        getbookItems()
+        setname('')
+        setprice('')
+        toast.success(data?.message)
+        setisitemuploading(false)
+      }
+
+    } catch (err) {
+      toast.error("Error in fetching banners");
+    }
+  }
+
+
+  const deletebookItems=async(item)=>{
+   try {
+      const res = await fetch(`${API_URL}/admin/deletebookitems/${item?._id}`, {
+        credentials: 'include',
+        method:'DELETE',
+      });
+      const data = await res.json();
+     
+      if (data?.message)
+      {
+        setSelectedItem(null)
+        getbookItems()
+        toast.success(data?.message)
+      }
+
+    } catch (err) {
+      toast.error("Error in fetching banners");
+    }
+  }
+
+  useEffect(()=>{
+
+    getbookItems()
+
+  },[])
 
   // Handle banner image selection
   const handleBannerChange = (e) => {
@@ -279,7 +409,7 @@ const UploadClientAssets = () => {
               {isEditMode && (
                 <button
                   onClick={cancelEdit}
-                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  className="text-red-500  hover:text-gray-700 text-sm"
                 >
                   Cancel
                 </button>
@@ -289,7 +419,8 @@ const UploadClientAssets = () => {
             <div className="space-y-4">
               {/* Header Input */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label 
+                className="block text-sm font-medium text-gray-700">
                   Header Text
                 </label>
                 <input
@@ -519,6 +650,114 @@ const UploadClientAssets = () => {
             </button>
           </div>
         </div>
+
+        <div className="grid grid-cols-1   lg:grid-cols-2 gap-6">
+         <div className="bg-white rounded-lg  mt-10 shadow-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <ShirtIcon className="text-blue-600" size={24} />
+                <h2 className="text-xl font-semibold text-gray-800"> 
+                  { !isItemedit ? 'Upload Book items' : 'Edit Book items' } </h2>
+           </div>
+            {isItemedit && (
+                <button
+                  onClick={cancelItemedit}
+                  className="text-red-500 hover:text-gray-700 text-sm"
+                >
+                  Cancel
+                </button>
+              )}
+           </div>
+            <div className="space-y-8">
+              <div className='space-y-2'>
+                <label htmlFor=""
+                className="block text-sm font-medium text-gray-700">
+                  Item Name
+                </label>
+<input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setname(e.target.value)}
+                  placeholder="Enter Book item name ex: Shirt , Pant/Jeans"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+                 <div className='space-y-2'>
+                <label htmlFor=""
+                className="block text-sm font-medium text-gray-700">
+                  Item price
+                </label>
+<input
+                  type="text"
+                  value={price}
+                  onChange={(e) => setprice(e.target.value)}
+                  placeholder="Enter Book item price ex: 25 or 40  "
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+                    <button
+                onClick={isItemedit ? editbookItems : createbookItems}
+                disabled={isItemuploading}
+                className={`w-full px-6 py-3 mt-12 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
+              >
+                {isItemuploading ? 'Processing...' : (isItemedit ? 'Update Book Item' : 'Upload Book Item')}
+              </button>
+          </div>    
+             <div className="bg-white rounded-lg mt-10 shadow-md p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <ShirtIcon className="text-green-600" size={24} />
+              <h2 className="text-xl font-semibold text-gray-800">Existing 
+                Book Items</h2>
+            </div>
+              <div className="space-y-4 max-h-[350px] overflow-y-auto">
+              {Itemlist.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No Book Items found</p>
+              ) : (
+              Itemlist.map((item, index) => (
+                  <div
+                    key={item._id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-800 truncate">
+                          {item.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 truncate">
+                          ₹{item.price}
+                        </p>
+                        {index === 0 && (
+                          <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            Primary
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleItemedit(item)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit banner"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        {index !== 0 && (
+                          <button
+                            onClick={() => deletebookItems(item)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete banner"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            </div>
+        </div>    
       </div>
     </div>
   );
