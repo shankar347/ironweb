@@ -420,20 +420,22 @@ const Adminassignoerder: React.FC = () => {
                     </span>
                 )
             },
-            {
-                header: 'Location',
-                key: 'location',
-                render: (row: Order) => (
-                    <div className="space-y-1">
-                        <div className="font-medium text-gray-800">
-                            {row.user_address?.area || 'N/A'}
-                        </div>
-                        {row.user_address?.city && (
-                            <div className="text-xs text-gray-500">{row.user_address.city}</div>
-                        )}
-                    </div>
-                )
-            },
+           {
+                         header: 'Address',
+                         key: 'address',
+                         render: (row: Order) => (
+                             <div className="space-y-1 max-w-sm">
+                                 <div className="flex items-start gap-2">
+                                     <MapPin size={16} className="text-gray-400 mt-1 flex-shrink-0" />
+                                     <div className="text-sm   text-gray-700">
+                                         <div>{row.user_address?.houseno}, {row.user_address?.streetname}</div>
+                                         <div>{row.user_address?.area}, {row.user_address?.city}</div>
+                                         <div className="text-gray-500">PIN: {row.user_address?.pincode}</div>
+                                     </div>
+                                 </div>
+                             </div>
+                         )
+                     },
             {
                 header: 'Slot',
                 key: 'order_slot',

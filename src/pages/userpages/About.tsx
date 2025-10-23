@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '../../components/ui/button';
 import happyCustomers from '@/assets/happy-customers.jpg';
 
@@ -12,7 +12,9 @@ import {
   Shield,
   Truck,
   Mail,
-  Phone
+  Phone,
+  VolumeX,
+  Volume
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../../hooks/tools';
@@ -23,6 +25,8 @@ const About = () => {
   const [activeContact, setActiveContact] = useState(0);
 
   const [videoUrl, setVideoUrl] = useState('');
+  const [isMuted, setIsMuted] = useState(true); // start muted
+  const videoRef = useRef(null);
 
    useEffect(() => {
       const getvideo = async () => {
@@ -46,6 +50,15 @@ const About = () => {
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+   
+  
+    const toggleMute = () => {
+      setIsMuted(!isMuted);
+      if (videoRef.current) {
+        videoRef.current.muted = !videoRef.current.muted;
+      }
+    };
 
   const values = [
     {
@@ -178,23 +191,34 @@ const About = () => {
               </div>
             </div>
 
-          <div className="relative h-full">
-              {videoUrl ? (
-               <video
-  src={videoUrl}
-  autoPlay
-  loop
-  playsInline
-  className="rounded-2xl shadow-lg w-full h-full
-   hover:scale-[1.01] transition-transform duration-300 object-cover"
-/>
-
-              ) : (
-                <div className="w-full h-64 bg-gray-200 flex items-center justify-center rounded-2xl shadow-lg text-gray-500">
-                  Loading video...
-                </div>
-              )}
-            </div>
+            <div className="relative ">
+      {videoUrl ? (
+        <>
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            autoPlay
+            loop
+            muted={isMuted}
+            playsInline
+            className="rounded-2xl 
+            max-h-[600px]
+            shadow-lg w-full h-auto hover:scale-[1.01] transition-transform duration-300 object-cover"
+          />
+          {/* Speaker button */}
+          <button
+            onClick={toggleMute}
+            className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition"
+          >
+            {isMuted ? <VolumeX size={20} /> : <Volume size={20} />}
+          </button>
+        </>
+      ) : (
+        <div className="w-full h-64 bg-gray-200 flex items-center justify-center rounded-2xl shadow-lg text-gray-500">
+          Loading video...
+        </div>
+      )}
+    </div>
           </div>
         </div>
       </section>

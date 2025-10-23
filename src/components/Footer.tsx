@@ -57,11 +57,11 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary" />
-                <span>+91 98765 43210</span>
+                <span>+91 6383148182</span>
               </div>
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>support@steamer.com</span>
+                <span>steemerservicescontactin@gmail.com</span>
               </div>
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
@@ -80,10 +80,8 @@ const Footer = () => {
             <div className="space-y-2 text-muted-foreground text-sm">
               <p>• West Tambaram</p>
               <p>• East Tambaram</p>
-              <p>• Selaiyur</p>
               <p>• New Perungalathur</p>
-              <p>• Chitlapakkam</p>
-              <p>• Pallikaranai</p>
+              <p>• Krishna nagar</p>
             </div>
           </div>
         </div>
@@ -93,14 +91,14 @@ const Footer = () => {
             <p className="text-muted-foreground text-sm">
               © 2024 Steamer. All rights reserved.
             </p>
-            <div className="flex space-x-6 text-sm">
+            {/* <div className="flex space-x-6 text-sm">
               <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
                 Privacy Policy
               </Link>
               <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
                 Terms of Service
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

@@ -6,7 +6,8 @@ import {
     ChevronDown,
     Eye,
     MoreVertical,
-    Download
+    Download,
+    Trash2
 } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
 
@@ -115,6 +116,45 @@ const DataTable: React.FC<{ data: Order[]; columns: Column[] }> = ({ data, colum
 };
 
 
+const DeleteModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    userName: string;
+}> = ({ isOpen, onClose, onConfirm, userName }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                    <Trash2 className="text-red-600" size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                    Delete User
+                </h3>
+                <p className="text-gray-600 text-center mb-6">
+                    Are you sure you want to delete <span className="font-semibold">{userName.substring(userName.length - 8)}</span>? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-all duration-200"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 // Main Orders Page Component
 const OrdersPage: React.FC = () => {
@@ -125,8 +165,42 @@ const OrdersPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [allOrders, setallOrders] = useState<Order[]>([]);
     const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-
+ const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
+    const [orderToDelete, setorderToDelete] = useState<Order | null >(null);
     // Fetch orders from API
+
+    const handleDeleteClick=(order:Order)=>{
+        setorderToDelete(order)
+        setDeleteModalOpen(true)
+    }
+
+
+    const confirmDelete=async()=>{
+        if (!orderToDelete) return
+         try {
+                    const res = await fetch(`${API_URL}/admin/deleteorders/${orderToDelete._id}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    const data = await res.json();
+        
+                    if (data?.error) {
+                        console.error(data?.error);
+                        return;
+                    }
+        
+                    // Remove user from state
+                    setallOrders(prev => prev.filter(u => u._id !== orderToDelete._id));
+                    setFilteredOrders(prev => prev.filter(u => u._id !== orderToDelete._id));
+        
+                    console.log('User deleted successfully');
+                } catch (err) {
+                    console.error('Error deleting user:', err);
+                } finally {
+                    setDeleteModalOpen(false);
+                    setorderToDelete(null);
+                }
+    }
     useEffect(() => {
         const getallorders = async () => {
             try {
@@ -357,6 +431,19 @@ const OrdersPage: React.FC = () => {
                     );
                 }
             },
+              {
+                header: 'Delete',
+                key: 'actions',
+                render: (row: Order) => (
+                    <button
+                        onClick={() => handleDeleteClick(row)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                        title="Delete user"
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                )
+            }
         ];
 
         return columns;
@@ -625,6 +712,15 @@ const OrdersPage: React.FC = () => {
                 </div>
 
             </div>
+               <DeleteModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setorderToDelete(null);
+                }}
+                onConfirm={confirmDelete}
+                userName={orderToDelete?._id || ''}
+            />
         </div>
     );
 };
