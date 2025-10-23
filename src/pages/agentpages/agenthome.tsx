@@ -132,36 +132,29 @@ const Agenthome: React.FC = () => {
     };
 
     const updateorderstatus = async (order_id: string, step: string): Promise<void> => {
-        try {
+       try {
             setUpdating(true);
-            // Mock API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Update the order in the state
-            setOrders(prevOrders => prevOrders.map(order => {
-                if (order._id === order_id) {
-                    const updatedFlow = order.order_flow.map((flowStep, index) => {
-                        if (flowStep.step === step) {
-                            return {
-                                ...flowStep,
-                                completed: true,
-                                completedAt: new Date().toISOString()
-                            };
-                        }
-                        return flowStep;
-                    });
-                    return { ...order, order_flow: updatedFlow };
-                }
-                return order;
-            }));
+            const res = await fetch(`${API_URL}/orders/updateorder`, {
+                credentials: 'include',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                method: 'PUT',
+                body: JSON.stringify({
+                    order_id,
+                    step
+                })
+            });
+            const data = await res.json();
 
-            setShowStatusModal(false);
-            setSelectedOrder(null);
-            setQrScanned(false);
-            toast.success('Order status updated successfully');
+            if (data.message === 'Order updated successfully' || res.ok) {
+                await getAgentorders();
+                setShowStatusModal(false);
+                setSelectedOrder(null);
+                setQrScanned(false);
+            }
         } catch (err) {
             console.log(err);
-            toast.error('Failed to update order status');
         } finally {
             setUpdating(false);
         }
