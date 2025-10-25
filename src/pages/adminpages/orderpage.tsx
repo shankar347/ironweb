@@ -289,7 +289,7 @@ const OrdersPage: React.FC = () => {
                 key: '_id',
                 render: (row: Order) => (
                     <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                        {row._id.substring(row._id.length - 8)}
+                        { row.orderid  || row._id.substring(row._id.length - 8)}
                     </span>
                 )
             },

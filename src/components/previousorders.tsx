@@ -14,6 +14,7 @@ interface UserAddress {
 
 interface Order {
   _id: string;
+  orderid:string;
   userid: string;
   user_address: UserAddress;
   order_date: string;
@@ -141,7 +142,7 @@ const Previousorders: React.FC<PreviousordersProps> = ({ orders }) => {
                   <div className="mb-3 sm:mb-4">
                     <p className="text-xs text-gray-500 mb-1">Order ID</p>
                     <p className="font-mono text-xs sm:text-sm font-semibold text-gray-800">
-                      #{order._id.slice(-8).toUpperCase()}
+                      #{order.orderid ||  order._id.slice(-8).toUpperCase()}
                     </p>
                   </div>
 

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Package, DollarSign, Clock, CheckCircle, X, QrCode, User, Phone, MapPin, Box, Copy, ArrowUpDown, Check, RefreshCw } from 'lucide-react';
+import { Package, DollarSign, Clock, CheckCircle, X, QrCode, User, Phone, MapPin, Box, Copy, ArrowUpDown, Check, RefreshCw, ArrowRight } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
 import qrcode from '../../assets/qrcode.jpeg'
+import { toast } from 'react-toastify';
+import SlideToUpdateButton from '../../components/slidebuton';
 
 
-const toast = {
-    success: (msg: string) => console.log('Success:', msg),
-    error: (msg: string) => console.log('Error:', msg)
-};
 
 const Button = ({ children, onClick, className }: any) => (
     <button onClick={onClick} className={className}>{children}</button>
@@ -38,6 +36,7 @@ interface OrderFlow {
 
 interface Order {
     _id: string;
+    orderid:string;
     userid: string;
     user_name: string;
     user_phoneno: string;
@@ -437,7 +436,7 @@ const Agenthome: React.FC = () => {
 
                     <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 mb-6">
                         <p className="text-sm text-gray-600 mb-1">Order ID</p>
-                        <p className="font-mono text-lg font-semibold text-gray-800">#{order._id.slice(-8)}</p>
+                        <p className="font-mono text-lg font-semibold text-gray-800">#{order.orderid || order._id.slice(-8)}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mb-6">
@@ -502,13 +501,10 @@ const Agenthome: React.FC = () => {
                         </button>
                     )}
 
-                    <button
-                        onClick={handleStatusUpdate}
-                        disabled={!canUpdate || updating}
-                        className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 transform shadow-lg ${!canUpdate || updating ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : `${GRADIENT_CLASS} text-white hover:opacity-90 hover:scale-105`}`}
-                    >
-                        {updating ? 'Updating...' : 'Update Status'}
-                    </button>
+<SlideToUpdateButton handleStatusUpdate={handleStatusUpdate}
+canUpdate={canUpdate}
+updating={updating}
+GRADIENT_CLASS={GRADIENT_CLASS}  /> 
                 </div>
             </div>
         );
@@ -647,13 +643,22 @@ const Agenthome: React.FC = () => {
                                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 justify-between mb-4">
-                                                <span className="font-mono text-sm md:text-base font-semibold text-gray-700 bg-gray-100 px-3 md:px-4 py-2 rounded-lg">
-                                                    #{order._id.slice(-8)}
+  <span className="font-mono text-sm md:text-base font-semibold text-gray-700 bg-gray-100 px-3 md:px-4 py-2 rounded-lg">
+                                                    #{ order.orderid ||  order._id.slice(-8)}
                                                 </span>
-
+                                                <div className='flex gap-2 items-baseline'>
+                                                    
+                                                  <span className="font-mono text-sm md:text-base font-semibold text-gray-700 bg-gray-100 px-3 md:px-4 py-2 rounded-lg">
+                                                    { order.user_name.trim().length > 13 ? 
+                                                    order.user_name.slice(0,13) + '...' :  order.user_name   }
+                                                </span>
+                                                
                                                 <div className={`w-6 h-6 md:w-7 md:h-7 ${GRADIENT_CLASS} rounded-full text-white items-center flex justify-center text-center text-xs md:text-sm font-bold`}>
                                                     {index + 1}
                                                 </div>
+                                                </div>
+                                              
+
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4">

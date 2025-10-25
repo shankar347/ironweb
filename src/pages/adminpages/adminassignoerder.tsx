@@ -43,11 +43,12 @@ interface Order {
     order_totalcloths: string;
     order_slot: string;
     order_paymenttype: string;
-    order_deliveryspeed:String
+    order_deliveryspeed: string;
     order_flow: OrderFlow[];
     agent_id?: string;
     agent_name?: string;
     agent_phoneno?: string;
+    orderid?: string;
     createdAt?: string;
     updatedAt?: string;
     __v?: number;
@@ -78,9 +79,13 @@ const AgentModal: React.FC<{
     onClose: () => void;
     agents: Agent[];
     onAssign: (agentId: string) => void;
-    orderInfo: Order | null;
-}> = ({ isOpen, onClose, agents, onAssign, orderInfo }) => {
+    orderInfo: Order | Order[] | null;
+    isMultiple?: boolean;
+}> = ({ isOpen, onClose, agents, onAssign, orderInfo, isMultiple = false }) => {
     if (!isOpen || !orderInfo) return null;
+
+    const orders = Array.isArray(orderInfo) ? orderInfo : [orderInfo];
+    const orderCount = orders.length;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -89,11 +94,18 @@ const AgentModal: React.FC<{
                 <div className={`${GRADIENT_CLASS} px-6 py-4 flex justify-between items-center`}>
                     <div>
                         <h3 className="text-xl font-bold text-white">
-                            Assign Agent to Order
+                            Assign Agent to {isMultiple ? `${orderCount} Orders` : 'Order'}
                         </h3>
-                        <p className="text-white/90 text-sm mt-1">
-                            Order ID: {orderInfo._id.substring(orderInfo._id.length - 8)}
-                        </p>
+                        {!isMultiple && orders[0] && (
+                            <p className="text-white/90 text-sm mt-1">
+                                Order ID: {orders[0].orderid || orders[0]._id.substring(orders[0]._id.length - 8)}
+                            </p>
+                        )}
+                        {isMultiple && (
+                            <p className="text-white/90 text-sm mt-1">
+                                {orderCount} orders selected for assignment
+                            </p>
+                        )}
                     </div>
                     <button
                         onClick={onClose}
@@ -104,26 +116,48 @@ const AgentModal: React.FC<{
                 </div>
 
                 {/* Order Details */}
-                <div className="px-6 py-4 bg-gray-50 border-b">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                            <span className="text-gray-600">Customer:</span>
-                            <p className="font-semibold text-gray-800">{orderInfo.user_name || 'N/A'}</p>
-                        </div>
-                        <div>
-                            <span className="text-gray-600">Location:</span>
-                            <p className="font-semibold text-gray-800">{orderInfo.user_address?.area || 'N/A'}</p>
-                        </div>
-                        <div>
-                            <span className="text-gray-600">Slot:</span>
-                            <p className="font-semibold text-gray-800">{orderInfo.order_slot}</p>
-                        </div>
-                        <div>
-                            <span className="text-gray-600">Amount:</span>
-                            <p className="font-semibold text-green-600">₹{orderInfo.order_totalamount}</p>
+                {!isMultiple && orders[0] && (
+                    <div className="px-6 py-4 bg-gray-50 border-b">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <span className="text-gray-600">Customer:</span>
+                                <p className="font-semibold text-gray-800">{orders[0].user_name || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-600">Location:</span>
+                                <p className="font-semibold text-gray-800">{orders[0].user_address?.area || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-600">Slot:</span>
+                                <p className="font-semibold text-gray-800">{orders[0].order_slot}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-600">Amount:</span>
+                                <p className="font-semibold text-green-600">₹{orders[0].order_totalamount}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {isMultiple && (
+                    <div className="px-6 py-4 bg-gray-50 border-b">
+                        <div className="text-sm text-gray-700">
+                            <p className="font-semibold mb-2">Selected Orders:</p>
+                            <div className="max-h-32 overflow-y-auto space-y-1">
+                                {orders.map((order, idx) => (
+                                    <div key={order._id} className="flex items-center gap-2">
+                                        <span className="text-gray-600">{idx + 1}.</span>
+                                        <span className="font-mono text-xs bg-white px-2 py-1 rounded">
+                                            {order.orderid || order._id.substring(order._id.length - 8)}
+                                        </span>
+                                        <span className="text-gray-600">-</span>
+                                        <span>{order.user_name || 'N/A'}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Agents List */}
                 <div className="p-6 overflow-y-auto max-h-[calc(90vh-250px)]">
@@ -189,12 +223,32 @@ const AgentModal: React.FC<{
 };
 
 // Simple DataTable Component with horizontal scroll
-const DataTable: React.FC<{ data: Order[]; columns: Column[] }> = ({ data, columns }) => {
+const DataTable: React.FC<{ 
+    data: Order[]; 
+    columns: Column[];
+    selectedRows: Set<string>;
+    onRowSelect: (orderId: string) => void;
+    onSelectAll: (selected: boolean) => void;
+}> = ({ data, columns, selectedRows, onRowSelect, onSelectAll }) => {
+    const allSelected = data.length > 0 && data.every(order => selectedRows.has(order._id));
+    const someSelected = data.some(order => selectedRows.has(order._id)) && !allSelected;
+
     return (
         <div className="overflow-x-auto rounded-lg shadow-lg">
             <table className="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
                 <thead className={`${GRADIENT_CLASS} text-white`}>
                     <tr>
+                        <th className="px-6 py-5 text-left">
+                            <input
+                                type="checkbox"
+                                checked={allSelected}
+                                ref={input => {
+                                    if (input) input.indeterminate = someSelected;
+                                }}
+                                onChange={(e) => onSelectAll(e.target.checked)}
+                                className="w-4 h-4 rounded border-white/30 text-blue-600 focus:ring-2 focus:ring-white cursor-pointer"
+                            />
+                        </th>
                         {columns.map((column) => (
                             <th
                                 key={column.key}
@@ -209,7 +263,7 @@ const DataTable: React.FC<{ data: Order[]; columns: Column[] }> = ({ data, colum
                     {data.length === 0 ? (
                         <tr>
                             <td
-                                colSpan={columns.length}
+                                colSpan={columns.length + 1}
                                 className="px-6 py-8 text-center text-gray-500"
                             >
                                 No orders found
@@ -217,7 +271,15 @@ const DataTable: React.FC<{ data: Order[]; columns: Column[] }> = ({ data, colum
                         </tr>
                     ) : (
                         data.map((row) => (
-                            <tr key={row._id} className="hover:bg-gray-50">
+                            <tr key={row._id} className={`hover:bg-gray-50 ${selectedRows.has(row._id) ? 'bg-blue-50' : ''}`}>
+                                <td className="px-6 py-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedRows.has(row._id)}
+                                        onChange={() => onRowSelect(row._id)}
+                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                                    />
+                                </td>
                                 {columns.map((column) => {
                                     const value = row[column.key as keyof Order];
 
@@ -254,6 +316,7 @@ const Adminassignoerder: React.FC = () => {
     const [allAgents, setAllAgents] = useState<Agent[]>([]);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
     // Fetch orders from API
     useEffect(() => {
@@ -300,7 +363,29 @@ const Adminassignoerder: React.FC = () => {
         getAllagents();
     }, []);
 
-    // Assign agent to order
+    // Handle row selection
+    const handleRowSelect = (orderId: string) => {
+        setSelectedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(orderId)) {
+                newSet.delete(orderId);
+            } else {
+                newSet.add(orderId);
+            }
+            return newSet;
+        });
+    };
+
+    // Handle select all
+    const handleSelectAll = (selected: boolean) => {
+        if (selected) {
+            setSelectedRows(new Set(filteredOrders.map(order => order._id)));
+        } else {
+            setSelectedRows(new Set());
+        }
+    };
+
+    // Assign agent to single order
     const assignAgentToOrder = async (agentId: string) => {
         if (!selectedOrder) return;
 
@@ -348,6 +433,62 @@ const Adminassignoerder: React.FC = () => {
         }
     };
 
+    // Assign agent to multiple orders
+    const assignAgentToMultipleOrders = async (agentId: string) => {
+        if (selectedRows.size === 0) return;
+
+        const selectedOrdersList = allOrders.filter(order => selectedRows.has(order._id));
+
+        try {
+            // Use Promise.all to assign agent to all selected orders
+            const assignmentPromises = selectedOrdersList.map(order => 
+                fetch(`${API_URL}/admin/assignagentorders`, {
+                    credentials: 'include',
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        order_id: order._id,
+                        agent_id: agentId
+                    })
+                }).then(res => res.json())
+            );
+
+            const results = await Promise.all(assignmentPromises);
+
+            // Check if any errors occurred
+            const hasErrors = results.some(data => data?.error);
+            if (hasErrors) {
+                console.error('Some assignments failed');
+            }
+
+            // Update the orders in the local state
+            const assignedAgent = allAgents.find(a => a._id === agentId);
+            const updatedOrders = allOrders.map(order => {
+                if (selectedRows.has(order._id)) {
+                    return {
+                        ...order,
+                        agent_id: agentId,
+                        agent_name: assignedAgent?.name,
+                        agent_phoneno: assignedAgent?.phoneno
+                    };
+                }
+                return order;
+            });
+
+            setallOrders(updatedOrders);
+            setFilteredOrders(updatedOrders);
+            setModalOpen(false);
+            setSelectedOrder(null);
+            setSelectedRows(new Set());
+
+            console.log('Agents assigned successfully to multiple orders');
+        } catch (err) {
+            console.error('Error assigning agents:', err);
+        }
+    };
+
     // Get unique locations from orders
     const getUniqueLocations = (): string[] => {
         const areas = new Set<string>();
@@ -377,6 +518,13 @@ const Adminassignoerder: React.FC = () => {
         setModalOpen(true);
     };
 
+    // Handle assign selected button click
+    const handleAssignSelectedClick = () => {
+        const selectedOrdersList = allOrders.filter(order => selectedRows.has(order._id));
+        setSelectedOrder(null);
+        setModalOpen(true);
+    };
+
     // Dynamic column generation
     const generateColumns = (): Column[] => {
         const columns: Column[] = [
@@ -385,7 +533,7 @@ const Adminassignoerder: React.FC = () => {
                 key: '_id',
                 render: (row: Order) => (
                     <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                        {row._id.substring(row._id.length - 8)}
+                        {row.orderid || row._id.substring(row._id.length - 8)}
                     </span>
                 )
             },
@@ -420,22 +568,22 @@ const Adminassignoerder: React.FC = () => {
                     </span>
                 )
             },
-           {
-                         header: 'Address',
-                         key: 'address',
-                         render: (row: Order) => (
-                             <div className="space-y-1 max-w-sm">
-                                 <div className="flex items-start gap-2">
-                                     <MapPin size={16} className="text-gray-400 mt-1 flex-shrink-0" />
-                                     <div className="text-sm   text-gray-700">
-                                         <div>{row.user_address?.houseno}, {row.user_address?.streetname}</div>
-                                         <div>{row.user_address?.area}, {row.user_address?.city}</div>
-                                         <div className="text-gray-500">PIN: {row.user_address?.pincode}</div>
-                                     </div>
-                                 </div>
-                             </div>
-                         )
-                     },
+            {
+                header: 'Address',
+                key: 'address',
+                render: (row: Order) => (
+                    <div className="space-y-1 max-w-sm">
+                        <div className="flex items-start gap-2">
+                            <MapPin size={16} className="text-gray-400 mt-1 flex-shrink-0" />
+                            <div className="text-sm text-gray-700">
+                                <div>{row.user_address?.houseno}, {row.user_address?.streetname}</div>
+                                <div>{row.user_address?.area}, {row.user_address?.city}</div>
+                                <div className="text-gray-500">PIN: {row.user_address?.pincode}</div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            },
             {
                 header: 'Slot',
                 key: 'order_slot',
@@ -445,13 +593,11 @@ const Adminassignoerder: React.FC = () => {
                     </span>
                 )
             },
-              {
+            {
                 header: 'Delivery Type',
                 key: 'order_deliveryspeed',
                 render: (row: Order) => (
-                    <span className="inline-flex items-center 
-                    px-3 py-1 rounded-full text-md 
-                     font-bold text-blue-800">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-md font-bold text-blue-800">
                         {row.order_deliveryspeed}
                     </span>
                 )
@@ -550,6 +696,7 @@ const Adminassignoerder: React.FC = () => {
                 order.order_totalcloths.includes(searchLower) ||
                 order.order_paymenttype.toLowerCase().includes(searchLower) ||
                 order.order_slot.toLowerCase().includes(searchLower) ||
+                (order.orderid && order.orderid.toLowerCase().includes(searchLower)) ||
                 (order.user_name && order.user_name.toLowerCase().includes(searchLower)) ||
                 (order.user_phoneno && order.user_phoneno.includes(searchLower)) ||
                 (order.agent_name && order.agent_name.toLowerCase().includes(searchLower)) ||
@@ -567,6 +714,7 @@ const Adminassignoerder: React.FC = () => {
         setLocation('All Locations');
         setSearchTerm('');
         setFilteredOrders(allOrders);
+        setSelectedRows(new Set());
     };
 
     // Real-time search as user types
@@ -581,6 +729,7 @@ const Adminassignoerder: React.FC = () => {
                 order.order_totalcloths.includes(searchLower) ||
                 order.order_paymenttype.toLowerCase().includes(searchLower) ||
                 order.order_slot.toLowerCase().includes(searchLower) ||
+                (order.orderid && order.orderid.toLowerCase().includes(searchLower)) ||
                 (order.user_name && order.user_name.toLowerCase().includes(searchLower)) ||
                 (order.user_phoneno && order.user_phoneno.includes(searchLower)) ||
                 (order.agent_name && order.agent_name.toLowerCase().includes(searchLower)) ||
@@ -604,10 +753,10 @@ const Adminassignoerder: React.FC = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="p-6 pt-0  max-w-screen-lg">
+                <div className="p-6 pt-0 max-w-screen-lg">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Location Filter */}
-                        <div className="space-y-2 ">
+                        <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
                                 Location
                             </label>
@@ -662,10 +811,28 @@ const Adminassignoerder: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Assign Selected Button - Shows when rows are selected */}
+                {selectedRows.size > 0 && (
+                    <div className="bg-white rounded-lg shadow-md p-4 max-w-screen-lg">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="text-gray-700 font-medium">
+                                    {selectedRows.size} order{selectedRows.size > 1 ? 's' : ''} selected
+                                </span>
+                            </div>
+                            <button
+                                onClick={handleAssignSelectedClick}
+                                className={`px-6 py-2 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center gap-2`}
+                            >
+                                <UserPlus size={18} />
+                                Assign Agent to Selected
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Orders Table */}
-                <div className="bg-white 
-                min-w-full
-                max-w-screen-lg rounded-lg shadow-md p-6">
+                <div className="bg-white min-w-full max-w-screen-lg rounded-lg shadow-md p-6">
                     <div className="mb-4 flex justify-between items-center">
                         <h2 className="text-xl font-semibold text-gray-800">
                             Today Orders
@@ -675,7 +842,13 @@ const Adminassignoerder: React.FC = () => {
                         </span>
                     </div>
 
-                    <DataTable data={filteredOrders} columns={generateColumns()} />
+                    <DataTable 
+                        data={filteredOrders} 
+                        columns={generateColumns()} 
+                        selectedRows={selectedRows}
+                        onRowSelect={handleRowSelect}
+                        onSelectAll={handleSelectAll}
+                    />
                 </div>
             </div>
 
@@ -687,8 +860,9 @@ const Adminassignoerder: React.FC = () => {
                     setSelectedOrder(null);
                 }}
                 agents={allAgents}
-                onAssign={assignAgentToOrder}
-                orderInfo={selectedOrder}
+                onAssign={selectedOrder ? assignAgentToOrder : assignAgentToMultipleOrders}
+                orderInfo={selectedOrder || allOrders.filter(order => selectedRows.has(order._id))}
+                isMultiple={!selectedOrder && selectedRows.size > 0}
             />
         </div>
     );

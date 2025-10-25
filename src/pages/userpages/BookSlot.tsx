@@ -32,6 +32,7 @@ const BookSlot = () => {
 
     const navigate = useNavigate();
 
+    console.log(deliverySpeed,'hi')
     let handlingcharge = 10;
 
     const getbookItems = async () => {
@@ -64,9 +65,9 @@ const BookSlot = () => {
     }, []);
 
     const deliveryCharges = {
-        normal: 20,
-        Express: 35,
-        lightning: 45
+        normal: 29,
+        Express: 39,
+        lightning: 49
     };
 
     const speedInfo = {
@@ -204,7 +205,9 @@ const BookSlot = () => {
 
     const getDeliveryCharge = () => {
         const totalCount = getTotalClothCount();
-        return totalCount > 9 ? 0 : deliveryCharges[deliverySpeed];
+        console.log(totalCount)
+        console.log( totalCount > 9 && deliverySpeed === 'normal')
+        return totalCount > 9 && deliverySpeed === 'normal' ? 0 : deliveryCharges[deliverySpeed];
     };
 
     const getTotalAmount = () => {
@@ -305,7 +308,7 @@ const BookSlot = () => {
     const todaySlots = getTodaySlots();
     const alternativeOptions = getAlternativeSpeedOptions();
     const totalClothCount = getTotalClothCount();
-    const isFreeDelivery = totalClothCount > 9;
+    const isFreeDelivery = totalClothCount > 9 && deliverySpeed === 'normal';
 
     return (
         <div className="min-h-screen bg-secondary/20 py-20">
@@ -477,12 +480,13 @@ const BookSlot = () => {
                             </div>
                         </div>
 
-                        <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                        <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 mb-4">
                             <p className="text-xs sm:text-sm text-gray-800">
                                 <strong className="text-primary">Selected:</strong> {speedInfo[deliverySpeed].title} - {speedInfo[deliverySpeed].description}
                             </p>
                         </div>
-                    </div>
+                                           
+    
 
                     {/* Item Selection */}
                     <Card ref={itemsRef} className="card-service p-4 sm:p-6 md:p-8 mx-2 sm:mx-0
@@ -589,6 +593,15 @@ const BookSlot = () => {
                         )}
                     </Card>
 
+ <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+
+                     <p className='flex gap-2 items-baseline '>
+                                <strong className="text-primary text-xs md:tex-sm lg:text-sm sm:text-sm">Info:</strong>  
+                                <p className='text-xs md:tex-sm lg:text-sm sm:text-sm'>For Normal Speed only Delivery Charges Free for more than 10 cloths </p>
+                            </p>
+                            </div>
+                    </div>
+
                     {/* Slot Selection */}
                     <Card ref={slotRef} className="card-service p-4 sm:p-6 md:p-8 my-5 mx-2 sm:mx-0">
                         <h3 className="text-base sm:text-lg mb-4 sm:mb-5 font-semibold text-foreground flex items-center space-x-2">
@@ -684,7 +697,7 @@ const BookSlot = () => {
                         </h3>
 
                         {/* Free Delivery Info */}
-                        {totalClothCount > 9 && (
+                        {totalClothCount > 9 && deliverySpeed === 'normal' && (
                             <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-300">
                                 <div className="flex items-center space-x-2">
                                     <Gift className="w-5 h-5 text-green-600 flex-shrink-0" />
@@ -701,7 +714,7 @@ const BookSlot = () => {
                         )}
 
                         {/* Delivery Charge Info */}
-                        {totalClothCount > 0 && totalClothCount <= 9 && (
+                        {totalClothCount > 0 && totalClothCount <= 9 && deliverySpeed === 'normal' && (
                             <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                                 <div className="flex items-center space-x-2">
                                     <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />

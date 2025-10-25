@@ -17,6 +17,7 @@ interface UserAddress {
 
 interface LastOrder {
   _id: string;
+  orderid:string;
   userid: string;
   user_address: UserAddress;
   order_date: string;
@@ -145,7 +146,7 @@ const Trackorder: React.FC = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-lg sm:rounded-xl">
               <p className="text-xs sm:text-sm text-gray-600 mb-1">Order ID</p>
-              <p className="font-semibold text-gray-800 text-xs sm:text-sm">...{lastorder._id.slice(-6)}</p>
+              <p className="font-semibold text-gray-800 text-xs sm:text-sm">{ lastorder.orderid || '...' + lastorder._id.slice(-6)}</p>
             </div>
             <div className="text-center p-3 sm:p-4 bg-indigo-50 rounded-lg sm:rounded-xl">
               <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Items</p>

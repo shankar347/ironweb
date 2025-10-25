@@ -35,6 +35,7 @@ interface OrderFlow {
 
 interface Order {
     _id: string;
+    orderid:string;
     userid: string;
     user_name?: string;
     user_phoneno?: string;
@@ -131,7 +132,7 @@ const TransactionDataTable: React.FC<{ data: DailyTransaction[]; columns: Column
                                                             {row.orders.map((order) => (
                                                                 <tr key={order._id} className="hover:bg-gray-100">
                                                                     <td className="px-4 py-2 font-mono text-xs">
-                                                                        {order._id.substring(order._id.length - 8)}
+                                                                        { order.orderid || order._id.substring(order._id.length - 8)}
                                                                     </td>
                                                                     <td className="px-4 py-2">{order.user_name || 'N/A'}</td>
                                                                     <td className="px-4 py-2">{order.user_phoneno || 'N/A'}</td>
