@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, DollarSign, Clock, CheckCircle, X, QrCode, User, Phone, MapPin, Box, Copy, ArrowUpDown, Check, RefreshCw, ArrowRight } from 'lucide-react';
+import { Package, DollarSign, Clock, CheckCircle, X, QrCode, User, Phone, MapPin, Box, Copy, ArrowUpDown, Check, RefreshCw, ArrowRight, HardDrive, Truck } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
 import qrcode from '../../assets/qrcode.jpeg'
 import { toast } from 'react-toastify';
@@ -597,8 +597,13 @@ GRADIENT_CLASS={GRADIENT_CLASS}  />
                         </div>
                     )}
                 </div>
+                  
 
-                {orders.length === 0 ? (
+                 {
+                    stats.completed !== orders.length ? 
+                    (
+                        <div>
+  {orders.length === 0 ? (
                     <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
                         <Package className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
                         <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
@@ -615,7 +620,9 @@ GRADIENT_CLASS={GRADIENT_CLASS}  />
                             const selectionNumber = selectedForSwap.indexOf(order._id) + 1;
 
                             return (
-                                <div
+                                
+                                progress !== 100 && (
+                                      <div
                                     key={order._id}
                                     className="bg-white rounded-2xl p-4 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 animate-slideUp relative"
                                     style={{ animationDelay: `${500 + index * 100}ms` }}
@@ -712,10 +719,23 @@ GRADIENT_CLASS={GRADIENT_CLASS}  />
                                         )}
                                     </div>
                                 </div>
+                                )
+                                  
                             );
                         })}
                     </div>
                 )}
+                        </div>
+                    ) :  <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
+                        <Truck className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
+                        <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
+                            No active  orders for agent now
+                        </div>
+                    </div>
+                 }
+
+
+              
             </div>
 
             {showStatusModal && <StatusUpdateModal />}
