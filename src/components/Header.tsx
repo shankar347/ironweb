@@ -20,13 +20,12 @@ const Header = () => {
   return (
     <header className="bg-background border-b border-border sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-[64px]">
+        <div className="flex items-center justify-between 
+        h-[64px]">
           {/* Logo */}
           <Link to={User?.isagent ? '/agent/home' : "/"} className="flex items-center space-x-2">
-            <div className="bg-primary p-2 rounded-lg">
-              <Shirt className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold text-primary">Steemer</span>
+             <img src='./assets/logo.png' 
+             className='w-44 h-[85px]' />
           </Link>
 
           {/* Desktop Navigation */}

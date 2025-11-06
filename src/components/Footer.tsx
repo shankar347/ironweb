@@ -14,10 +14,8 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="bg-primary p-2 rounded-lg">
-                <Shirt className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <span className="text-2xl font-bold text-primary">Steamer</span>
+            <img src='./assets/logo.png' 
+             className='w-44 h-[85px]' />
             </Link>
             <p className="text-muted-foreground">
               Your clothes, perfectly pressed and delivered fast. Professional steaming service at your doorstep.
