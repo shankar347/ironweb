@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { SteamContext } from '@/hooks/steamcontext';
 import Select from "react-select";
 import { API_URL } from '../../hooks/tools';
+import OfferCard from './offercard';
 
 const BookSlot = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -484,8 +485,10 @@ const BookSlot = () => {
                             <p className="text-xs sm:text-sm text-gray-800">
                                 <strong className="text-primary">Selected:</strong> {speedInfo[deliverySpeed].title} - {speedInfo[deliverySpeed].description}
                             </p>
+
                         </div>
-                                           
+            <OfferCard/>
+
     
 
                     {/* Item Selection */}

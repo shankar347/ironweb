@@ -227,6 +227,9 @@ const Customeremail = () => {
                                     </span>
                                 </p>
                             </div>
+                              <div className='text-sm text-muted-foreground mt-5'>
+                Check spam folders OTP might by identify as spam mistakenly
+              </div>
                         </form>
                     </Card>
                 </div>
