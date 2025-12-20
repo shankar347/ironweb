@@ -1,13 +1,20 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shirt, ShoppingCart, Clock, Wallet, CreditCard, HandCoins, ListOrdered, Plus, Minus, Zap, Gauge, Info, Calendar, Gift } from 'lucide-react';
+import { 
+  Shirt, ShoppingCart, Clock, Wallet, CreditCard, 
+  HandCoins, ListOrdered, Plus, Minus, Zap, Gauge, 
+  Info, Calendar, Gift, Truck, Sparkles, Tag, 
+  AlertCircle, ArrowRight, Check, Crown, Flashlight,
+  Rocket, Shield, Star, Timer, TrendingUp
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
 import { SteamContext } from '@/hooks/steamcontext';
 import Select from "react-select";
 import { API_URL } from '../../hooks/tools';
 import OfferCard from './offercard';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const BookSlot = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -15,11 +22,12 @@ const BookSlot = () => {
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const { formData, setFormData, orderdetails, setorderdetails } = steamcontext;
     const [paymenttype, selectpaymenttype] = useState('');
-    const [deliverySpeed, setDeliverySpeed] = useState<'normal' | 'Express' | 'lightning'>('normal');
+    const [deliverySpeed, setDeliverySpeed] = useState<'normal' | 'express' | 'lightning'>('normal');
     const [hoveredSpeed, setHoveredSpeed] = useState<string | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [itemList, setItemlist] = useState([]);
     const [itemCounts, setItemCounts] = useState({});
+    const [activeSpeedInfo, setActiveSpeedInfo] = useState<string | null>(null);
 
     const [errors, setErrors] = useState({
         items: "",
@@ -33,9 +41,6 @@ const BookSlot = () => {
 
     const navigate = useNavigate();
 
-    console.log(deliverySpeed,'hi')
-    let handlingcharge = 10;
-
     const getbookItems = async () => {
         try {
             const res = await fetch(`${API_URL}/admin/getbookitems`, {
@@ -45,12 +50,10 @@ const BookSlot = () => {
 
             if (data?.data) {
                 setItemlist(data?.data);
-                // Initialize counts for all items
                 const initialCounts = {};
                 data.data.forEach(item => {
                     initialCounts[item._id] = 0;
                 });
-                // Set first item (Shirt) to 1
                 if (data.data.length > 0) {
                     initialCounts[data.data[0]._id] = 1;
                 }
@@ -67,7 +70,7 @@ const BookSlot = () => {
 
     const deliveryCharges = {
         normal: 29,
-        Express: 39,
+        express: 39,
         lightning: 49
     };
 
@@ -76,22 +79,31 @@ const BookSlot = () => {
             title: "Normal Delivery",
             description: "Standard 7-hour time slots. Best for planned schedules.",
             icon: Shirt,
-            color: "blue",
-            bufferHours: 3
+            color: "bg-gradient-to-br from-blue-500 to-blue-600",
+            borderColor: "border-blue-500",
+            textColor: "text-blue-600",
+            bufferHours: 3,
+            features: ["Standard 7-hour slots", "Most affordable", "Free for 10+ items"]
         },
-        Express: {
-            title: "Speed Delivery",
+        express: {
+            title: "Express Delivery",
             description: "Quick 3-hour slots. Faster service with moderate priority.",
-            icon: Gauge,
-            color: "orange",
-            bufferHours: 2
+            icon: Rocket,
+            color: "bg-gradient-to-br from-orange-500 to-orange-600",
+            borderColor: "border-orange-500",
+            textColor: "text-orange-600",
+            bufferHours: 2,
+            features: ["3-hour slots", "Priority processing", "Faster turnaround"]
         },
         lightning: {
-            title: "Lightning Delivery",
-            description: "Express 1.5-hour slots. Highest priority and fastest service!",
+            title: "Lightning Fast",
+            description: "Super fast 1.5-hour slots. Highest priority service!",
             icon: Zap,
-            color: "purple",
-            bufferHours: 1
+            color: "bg-gradient-to-br from-purple-600 to-purple-700",
+            borderColor: "border-purple-500",
+            textColor: "text-purple-600",
+            bufferHours: 1,
+            features: ["1.5-hour slots", "Highest priority", "Express delivery"]
         }
     };
 
@@ -120,7 +132,7 @@ const BookSlot = () => {
         const now = currentTime;
         const currentHour = now.getHours();
         const currentMinutes = now.getMinutes();
-        const bufferHours = 3;
+        const bufferHours = 3
 
         const currentTimeDecimal = currentHour + (currentMinutes / 60);
         const deadlineTimeDecimal = endHour - bufferHours;
@@ -135,7 +147,7 @@ const BookSlot = () => {
             case 'normal':
                 allSlots = ['6AM - 1PM', '1PM - 8PM'];
                 break;
-            case 'Express':
+            case 'express':
                 allSlots = ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM', '6PM - 8PM'];
                 break;
             case 'lightning':
@@ -206,24 +218,22 @@ const BookSlot = () => {
 
     const getDeliveryCharge = () => {
         const totalCount = getTotalClothCount();
-        console.log(totalCount)
-        console.log( totalCount > 9 && deliverySpeed === 'normal')
         return totalCount > 9 && deliverySpeed === 'normal' ? 0 : deliveryCharges[deliverySpeed];
     };
 
     const getTotalAmount = () => {
-        return getItemsSubtotal() + getDeliveryCharge() + handlingcharge;
+        return getItemsSubtotal() + getDeliveryCharge() + 10; // handling charge
     };
 
     const getAlternativeSpeedOptions = () => {
         const alternatives = [];
-        const speeds: Array<'normal' | 'Express' | 'lightning'> = ['normal', 'Express', 'lightning'];
+        const speeds: Array<'normal' | 'express' | 'lightning'> = ['normal', 'express', 'lightning'];
 
         for (const speed of speeds) {
             if (speed !== deliverySpeed) {
                 const testSlots = speed === 'normal'
                     ? ['6AM - 1PM', '1PM - 8PM']
-                    : speed === 'Express'
+                    : speed === 'express'
                         ? ['6AM - 9AM', '9AM - 12PM', '12PM - 3PM', '3PM - 6PM', '6PM - 8PM']
                         : ['8AM - 9:30AM', '9:30AM - 11AM', '11AM - 12:30PM', '12:30PM - 2PM',
                             '2PM - 3:30PM', '3:30PM - 5PM', '5PM - 6:30PM', '6:30PM - 8PM'];
@@ -234,7 +244,7 @@ const BookSlot = () => {
 
                 const availableToday = testSlots.some(slot => {
                     const { endHour } = parseTimeSlot(slot);
-                    const deadlineTimeDecimal = endHour - 3;
+                    const deadlineTimeDecimal = endHour - speedInfo[speed].bufferHours;
                     return currentTimeDecimal < deadlineTimeDecimal;
                 });
 
@@ -311,30 +321,82 @@ const BookSlot = () => {
     const totalClothCount = getTotalClothCount();
     const isFreeDelivery = totalClothCount > 9 && deliverySpeed === 'normal';
 
+    // Animation variants
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                duration: 0.5,
+                when: "beforeChildren",
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1,
+            transition: { type: "spring", stiffness: 100 }
+        }
+    };
+
+    const speedCardVariants = {
+        normal: { scale: 1 },
+        hover: { scale: 1.05 },
+        selected: { scale: 1.1 }
+    };
+
     return (
-        <div className="min-h-screen bg-secondary/20 py-20">
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="min-h-screen bg-gradient-to-br from-secondary/10 via-background to-primary/5 py-12 sm:py-20"
+        >
             <div className="container mx-auto px-4">
-                <div className="max-w-2xl mx-auto">
-                    <div className="text-center mb-8">
-                        <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Shirt className="w-8 h-8 text-primary" />
-                        </div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-                            Book Iron Slot
-                        </h1>
-                        <p className="text-sm sm:text-base text-muted-foreground">
-                            Select your preferred slot and quantity
-                        </p>
-                    </div>
+                <motion.div 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="max-w-2xl mx-auto"
+                >
+                    {/* Header */}
+                    <motion.div 
+                        initial={{ y: 10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="text-center mb-8 sm:mb-12"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.4, type: "spring" }}
+                            className="bg-gradient-to-r from-primary to-primary/80 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg shadow-primary/20"
+                        >
+                            <Shirt className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                        </motion.div>
+                        <motion.h1 
+                            initial={{ y: 10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                            className="text-3xl sm:text-4xl font-bold text-foreground mb-2 sm:mb-3 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent"
+                        >
+                            Book Your Slot
+                        </motion.h1>
+                        <motion.p 
+                            initial={{ y: 10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.6 }}
+                            className="text-muted-foreground text-base sm:text-lg"
+                        >
+                            Select items, choose delivery speed, and pick your preferred time
+                        </motion.p>
+                    </motion.div>
 
-                    {/* Delivery Speed Selection */}
-                    <div className="mb-5 px-2">
-                        <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center space-x-2 mb-4">
-                            <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                            <span>Choose Delivery Speed</span>
-                        </h3>
-
-                        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+    <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6 md:gap-4">
                             {/* Normal Speed */}
                             <div className="relative">
                                 <button
@@ -381,33 +443,33 @@ const BookSlot = () => {
                             {/* Express Delivery */}
                             <div className="relative">
                                 <button
-                                    onClick={() => setDeliverySpeed('Express')}
-                                    onMouseEnter={() => setHoveredSpeed('Express')}
+                                    onClick={() => setDeliverySpeed('express')}
+                                    onMouseEnter={() => setHoveredSpeed('express')}
                                     onMouseLeave={() => setHoveredSpeed(null)}
-                                    className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${deliverySpeed === 'Express'
+                                    className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${deliverySpeed === 'express'
                                             ? 'border-orange-500 bg-orange-500 shadow-lg text-white'
                                             : 'border-orange-300 bg-white hover:border-orange-400 hover:shadow-md text-gray-700'
-                                        } ${deliverySpeed !== 'Express' ? 'hover:animate-pulse' : ''}`}
+                                        } ${deliverySpeed !== 'express' ? 'hover:animate-pulse' : ''}`}
                                 >
                                     <div className="flex flex-col items-center space-y-1 sm:space-y-2">
-                                        <Gauge className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${deliverySpeed === 'Express' ? 'text-white' : 'text-orange-500'
-                                            } ${deliverySpeed === 'Express' ? 'animate-spin' : ''}`}
-                                            style={{ animationDuration: deliverySpeed === 'Express' ? '2s' : 'none' }} />
-                                        <span className={`font-semibold text-xs sm:text-sm md:text-base ${deliverySpeed === 'Express' ? 'text-white' : 'text-orange-600'
+                                        <Gauge className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${deliverySpeed === 'express' ? 'text-white' : 'text-orange-500'
+                                            } ${deliverySpeed === 'express' ? 'animate-spin' : ''}`}
+                                            style={{ animationDuration: deliverySpeed === 'express' ? '2s' : 'none' }} />
+                                        <span className={`font-semibold text-xs sm:text-sm md:text-base ${deliverySpeed === 'express' ? 'text-white' : 'text-orange-600'
                                             }`}>
                                             Express
                                         </span>
-                                        <span className={`text-xs sm:text-sm ${deliverySpeed === 'Express' ? 'text-orange-100' : 'text-gray-600'
-                                            }`}>₹{deliveryCharges.Express}</span>
-                                        <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'Express' ? 'text-orange-100' : 'text-gray-500'
+                                        <span className={`text-xs sm:text-sm ${deliverySpeed === 'express' ? 'text-orange-100' : 'text-gray-600'
+                                            }`}>₹{deliveryCharges.express}</span>
+                                        <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'express' ? 'text-orange-100' : 'text-gray-500'
                                             }`}>3 hr</span>
                                     </div>
-                                    {deliverySpeed === 'Express' && (
+                                    {deliverySpeed === 'express' && (
                                         <div className="absolute top-2 right-2">
                                             <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
                                         </div>
                                     )}
-                                    {deliverySpeed !== 'Express' && (
+                                    {deliverySpeed !== 'express' && (
                                         <div className="absolute -top-1 -right-1">
                                             <div className="w-3 h-3 bg-orange-400 rounded-full animate-pulse"></div>
                                         </div>
@@ -419,8 +481,8 @@ const BookSlot = () => {
                                         <div className="flex items-start space-x-2">
                                             <Info className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                                             <div>
-                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.Express.title}</p>
-                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.Express.description}</p>
+                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.express.title}</p>
+                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.express.description}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -481,374 +543,545 @@ const BookSlot = () => {
                             </div>
                         </div>
 
-                        <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 mb-4">
-                            <p className="text-xs sm:text-sm text-gray-800">
-                                <strong className="text-primary">Selected:</strong> {speedInfo[deliverySpeed].title} - {speedInfo[deliverySpeed].description}
-                            </p>
+                    {/* Delivery Speed Selection */}
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="mb-6 sm:mb-8"
+                    >
+                        <motion.div variants={itemVariants}>
+                            <Card className="p-6 sm:p-8 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
+                                <div className="flex items-center mb-6">
+                                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl mr-4">
+                                        <Rocket className="w-7 h-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-foreground">Delivery Speed</h3>
+                                        <p className="text-muted-foreground">Choose how fast you want your service</p>
+                                    </div>
+                                </div>
 
-                        </div>
-            <OfferCard/>
 
-    
+                                {/* Active Speed Info */}
+                                <AnimatePresence>
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className={`p-4 rounded-lg ${
+                                            deliverySpeed === 'normal' ? 'bg-blue-50 border-blue-200' :
+                                            deliverySpeed === 'express' ? 'bg-orange-50 border-orange-200' :
+                                            'bg-purple-50 border-purple-200'
+                                        } border`}
+                                    >
+                                        <div className="flex items-start space-x-3">
+                                            <div className={`p-2 rounded-lg ${
+                                                deliverySpeed === 'normal' ? 'bg-blue-100' :
+                                                deliverySpeed === 'express' ? 'bg-orange-100' :
+                                                'bg-purple-100'
+                                            }`}>
+                                                <Info className={`w-5 h-5 ${
+                                                    deliverySpeed === 'normal' ? 'text-blue-600' :
+                                                    deliverySpeed === 'express' ? 'text-orange-600' :
+                                                    'text-purple-600'
+                                                }`} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-foreground mb-2">
+                                                    {speedInfo[deliverySpeed].title} Features:
+                                                </h4>
+                                                <ul className="space-y-1">
+                                                    {speedInfo[deliverySpeed].features.map((feature, index) => (
+                                                        <li key={index} className="flex items-center text-sm text-muted-foreground">
+                                                            <Check className="w-3 h-3 mr-2 text-green-500" />
+                                                            {feature}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <p className="text-sm text-muted-foreground mt-3">
+                                                    {speedInfo[deliverySpeed].description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </AnimatePresence>
+                            </Card>
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Offer Card */}
+                    <motion.div variants={itemVariants}>
+                        <OfferCard />
+                    </motion.div>
 
                     {/* Item Selection */}
-                    <Card ref={itemsRef} className="card-service p-4 sm:p-6 md:p-8 mx-2 sm:mx-0
-                    space-y-8">
-                        <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center space-x-2 mb-4">
-                            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                            <span>Select Items</span>
-                        </h3>
-
-                        {itemList.length > 0 && itemList.map((item, index) => (
-                            <div key={item._id} className={`${index === 0 ? 'mb-6' : 'mt-5'}`}>
-                              
-
-                                {index === 0 && (
-                                     <>
-                                      <h3 className="text-sm sm:text-lg font-bold text-primary mb-3 ml-3">
-                                    {item.name} (₹{item.price})
-                                </h3>
-                                    <div className='flex justify-center flex-wrap gap-2 mb-5'>
-                                        {[1, 3, 6, 9, 10, 12, 15, 18, 20].map((btn) => (
-                                            <Button
-                                                key={btn}
-                                                size={'sm'}
-                                                onClick={() => handleItemCountChange(item._id, btn)}
-                                                className={`hover:bg-gray-100 hover:text-primary hover:border-2 min-w-[55px] sm:min-w-[70px] hover:border-primary transition-all duration-200 text-xs sm:text-sm ${itemCounts[item._id] === btn && 'bg-gray-100 text-primary border-2 border-primary'
-                                                    }`}
-                                            >
-                                                {btn}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                     <div className="flex items-center 
-                                     align-center justify-center space-x-3">
-                                        <Button
-                                            size="sm"
-                                            className="w-8 h-8 sm:w-10 sm:h-10 p-0"
-                                            onClick={() => handleItemCountChange(item._id, (itemCounts[item._id] || 0) - 1)}
-                                        >
-                                            <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
-                                        </Button>
-
-                                        <div className="font-bold text-lg sm:text-xl min-w-[40px] text-center">
-                                            {itemCounts[item._id] || 0}
-                                        </div>
-
-                                        <Button
-                                            size="sm"
-                                            className="w-8 h-8 sm:w-10 sm:h-10 p-0"
-                                            onClick={() => handleItemCountChange(item._id, (itemCounts[item._id] || 0) + 1)}
-                                        >
-                                            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                                        </Button>
-                                    </div>
-                                     </>
-                                )}
-
-                               
-                              {
-                                index !== 0 && 
-                                  <div className="flex justify-between mx-0 
-                                  items-center">
-                                   <h3 className="text-sm sm:text-lg font-bold text-primary mb-3 ml-3">
-                                    {item.name} (₹{item.price})
-                                </h3>
-                                    <div className="flex items-center space-x-1">
-                                        <Button
-                                            size="sm"
-                                            className="w-8 h-8 sm:w-10 sm:h-10 p-0"
-                                            onClick={() => handleItemCountChange(item._id, (itemCounts[item._id] || 0) - 1)}
-                                        >
-                                            <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
-                                        </Button>
-
-                                        <div className="font-bold text-lg sm:text-xl min-w-[25px] text-center">
-                                            {itemCounts[item._id] || 0}
-                                        </div>
-
-                                        <Button
-                                            size="sm"
-                                            className="w-8 h-8 sm:w-10 sm:h-10 p-0"
-                                            onClick={() => handleItemCountChange(item._id, (itemCounts[item._id] || 0) + 1)}
-                                        >
-                                            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                                        </Button>
-                                    </div>
+                    <motion.div variants={itemVariants}>
+                        <Card ref={itemsRef} className="p-6 sm:p-8 my-6 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
+                            <div className="flex items-center mb-6">
+                                <div className="bg-gradient-to-r from-primary to-primary/80 p-3 rounded-xl mr-4">
+                                    <ShoppingCart className="w-7 h-7 text-white" />
                                 </div>
-                              }
-
-                                {/* {index < itemList.length - 1 && <div className="mt-4 border-b border-gray-200"></div>} */}
+                                <div>
+                                    <h3 className="text-xl font-bold text-foreground">Select Items</h3>
+                                    <p className="text-muted-foreground">Choose items and quantity</p>
+                                </div>
                             </div>
-                        ))}
 
-                        {errors.items && (
-                            <p className="text-red-500 text-xs sm:text-sm mt-4 text-center">{errors.items}</p>
-                        )}
+                            {itemList.length > 0 && itemList.map((item, index) => (
+                                <motion.div
+                                    key={item._id}
+                                    variants={itemVariants}
+                                    className={`${index === 0 ? 'mb-8' : 'mt-6'} p-4 rounded-xl border hover:border-primary/30 transition-all duration-200 ${
+                                        (itemCounts[item._id] || 0) > 0 ? 'bg-primary/5 border-primary/20' : 'bg-secondary/10 border-secondary'
+                                    }`}
+                                >
+                                    {index === 0 ? (
+                                        <>
+                                            <div className="text-center mb-6">
+                                                <h3 className="text-xl font-bold text-primary mb-2">
+                                                    {item.name} (₹{item.price})
+                                                </h3>
+                                                <p className="text-muted-foreground">Select quantity</p>
+                                            </div>
+                                            
+                                            <div className="flex justify-center flex-wrap gap-2 mb-6">
+                                                {[1, 3, 6, 9, 10, 12, 15, 18, 20].map((btn) => (
+                                                    <motion.button
+                                                        key={btn}
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        onClick={() => handleItemCountChange(item._id, btn)}
+                                                        className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                                                            itemCounts[item._id] === btn
+                                                                ? 'bg-primary text-primary-foreground shadow-lg'
+                                                                : 'bg-secondary hover:bg-secondary/80 text-foreground'
+                                                        }`}
+                                                    >
+                                                        {btn}
+                                                    </motion.button>
+                                                ))}
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-center space-x-4">
+                                                <motion.button
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    onClick={() => handleItemCountChange(item._id, (itemCounts[item._id] || 0) - 1)}
+                                                    className="w-12 h-12 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-all duration-200"
+                                                >
+                                                    <Minus className="w-5 h-5" />
+                                                </motion.button>
 
-                        {isFreeDelivery && (
-                            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-300 flex items-center space-x-2">
-                                <Gift className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                <p className="text-sm font-semibold text-green-800">
-                                    🎉 Free Delivery! You've selected {totalClothCount} items
-                                </p>
+                                                <div className="font-bold text-3xl min-w-[60px] text-center">
+                                                    {itemCounts[item._id] || 0}
+                                                </div>
+
+                                                <motion.button
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    onClick={() => handleItemCountChange(item._id, (itemCounts[item._id] || 0) + 1)}
+                                                    className="w-12 h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-all duration-200"
+                                                >
+                                                    <Plus className="w-5 h-5" />
+                                                </motion.button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <h4 className="font-bold text-foreground">{item.name}</h4>
+                                                <p className="text-sm text-muted-foreground">₹{item.price} per item</p>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <motion.button
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    onClick={() => handleItemCountChange(item._id, (itemCounts[item._id] || 0) - 1)}
+                                                    className="w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center"
+                                                >
+                                                    <Minus className="w-3 h-3" />
+                                                </motion.button>
+                                                <div className="font-bold text-xl min-w-[40px] text-center">
+                                                    {itemCounts[item._id] || 0}
+                                                </div>
+                                                <motion.button
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    onClick={() => handleItemCountChange(item._id, (itemCounts[item._id] || 0) + 1)}
+                                                    className="w-8 h-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center"
+                                                >
+                                                    <Plus className="w-3 h-3" />
+                                                </motion.button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            ))}
+
+                            {errors.items && (
+                                <motion.p
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-red-500 text-sm mt-4 flex items-center justify-center"
+                                >
+                                    <AlertCircle className="w-4 h-4 mr-2" />
+                                    {errors.items}
+                                </motion.p>
+                            )}
+                        </Card>
+                    </motion.div>
+
+                    {/* Free Delivery Info */}
+                    {isFreeDelivery && (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="my-6"
+                        >
+                            <div className="p-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl shadow-xl border-2 border-emerald-400">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="bg-white/20 p-3 rounded-full">
+                                            <Gift className="w-8 h-8 text-white" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-bold text-white">🎉 Free Delivery Unlocked!</h4>
+                                            <p className="text-white/90">
+                                                You've selected {totalClothCount} items. Delivery charges waived!
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Sparkles className="w-8 h-8 text-yellow-300" />
+                                </div>
                             </div>
-                        )}
-                    </Card>
-
- <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-
-                     <p className='flex gap-2 items-baseline '>
-                                <strong className="text-primary text-xs md:tex-sm lg:text-sm sm:text-sm">Info:</strong>  
-                                <p className='text-xs md:tex-sm lg:text-sm sm:text-sm'>For Normal Speed only Delivery Charges Free for more than 10 cloths </p>
-                            </p>
-                            </div>
-                    </div>
+                        </motion.div>
+                    )}
 
                     {/* Slot Selection */}
-                    <Card ref={slotRef} className="card-service p-4 sm:p-6 md:p-8 my-5 mx-2 sm:mx-0">
-                        <h3 className="text-base sm:text-lg mb-4 sm:mb-5 font-semibold text-foreground flex items-center space-x-2">
-                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                            <span>Select Time Slots</span>
-                        </h3>
-
-                        {todaySlots.length === 0 && (
-                            <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg">
-                                <div className="flex items-center space-x-2 mb-2">
-                                    <Calendar className="w-5 h-5 text-amber-600" />
-                                    <p className="text-sm font-semibold text-amber-800">
-                                        No slots available today for {speedInfo[deliverySpeed].title}
-                                    </p>
+                    <motion.div variants={itemVariants}>
+                        <Card ref={slotRef} className="p-6 sm:p-8 my-6 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
+                            <div className="flex items-center mb-6">
+                                <div className="bg-gradient-to-r from-primary to-primary/80 p-3 rounded-xl mr-4">
+                                    <Clock className="w-7 h-7 text-white" />
                                 </div>
-                                <p className="text-xs text-amber-700 ml-7">
-                                    All slots shown below are for tomorrow. {alternativeOptions.length > 0 && "Or try a different delivery speed for today's availability."}
-                                </p>
-                            </div>
-                        )}
-
-                        {todaySlots.length === 0 && alternativeOptions.length > 0 && (
-                            <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-                                <p className="text-sm font-semibold text-green-800 mb-2">
-                                    ✨ Available today with other speeds:
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {alternativeOptions.map((speed) => (
-                                        <button
-                                            key={speed}
-                                            onClick={() => setDeliverySpeed(speed)}
-                                            className="px-3 py-1.5 bg-white border-2 border-green-300 rounded-lg text-xs font-medium text-green-700 hover:bg-green-50 hover:border-green-400 transition-all duration-200 transform hover:scale-105"
-                                        >
-                                            Switch to {speedInfo[speed].title}
-                                        </button>
-                                    ))}
+                                <div>
+                                    <h3 className="text-xl font-bold text-foreground">Select Time Slot</h3>
+                                    <p className="text-muted-foreground">Choose your preferred delivery time</p>
                                 </div>
                             </div>
-                        )}
 
-                        {todaySlots.length > 0 && (
-                            <div className="mb-3 p-2 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
-                                <p className="text-xs text-green-700 font-medium">
-                                    ✓ {todaySlots.length} slot{todaySlots.length > 1 ? 's' : ''} available today
-                                </p>
-                            </div>
-                        )}
+                            {todaySlots.length === 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl"
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <Calendar className="w-6 h-6 text-amber-600" />
+                                        <div>
+                                            <h4 className="font-bold text-amber-800 mb-1">
+                                                No slots available today for {speedInfo[deliverySpeed].title}
+                                            </h4>
+                                            <p className="text-sm text-amber-700">
+                                                All slots shown below are for tomorrow
+                                            </p>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
 
-                        {allSlotOptions.length > 0 ? (
+                            {todaySlots.length > 0 && (
+                                <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                                    <div className="flex items-center space-x-2">
+                                        <Timer className="w-4 h-4 text-green-600" />
+                                        <p className="text-sm font-medium text-green-800">
+                                            ✓ {todaySlots.length} slot{todaySlots.length > 1 ? 's' : ''} available today
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <Select
                                 options={allSlotOptions}
                                 value={allSlotOptions.find((opt) => opt.value === selectedSlot) || null}
                                 onChange={(selected) => setSelectedSlot(selected?.value || null)}
                                 placeholder="Select your preferred time slot"
-                                className="w-full text-sm"
+                                className="w-full"
                                 styles={{
-                                    control: (base) => ({
+                                    control: (base, state) => ({
                                         ...base,
-                                        borderRadius: "0.5rem",
-                                        borderColor: "#D1D5DB",
-                                        borderWidth: "1px",
-                                        padding: "0.25rem",
-                                        fontSize: "0.875rem"
+                                        borderRadius: "0.75rem",
+                                        borderColor: state.isFocused ? '#3b82f6' : errors.selectedSlot ? '#ef4444' : '#e5e7eb',
+                                        borderWidth: "2px",
+                                        padding: "12px 16px",
+                                        minHeight: "56px",
+                                        backgroundColor: 'hsl(var(--card))',
+                                        boxShadow: state.isFocused ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
+                                        transition: 'all 0.2s ease',
+                                        '&:hover': {
+                                            borderColor: state.isFocused ? '#3b82f6' : '#3b82f6'
+                                        }
+                                    }),
+                                    placeholder: (base) => ({
+                                        ...base,
+                                        color: 'hsl(var(--muted-foreground))',
+                                        fontSize: '14px'
+                                    }),
+                                    singleValue: (base) => ({
+                                        ...base,
+                                        color: 'hsl(var(--foreground))',
+                                        fontSize: '14px'
+                                    }),
+                                    menu: (base) => ({
+                                        ...base,
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '2px solid hsl(var(--border))',
+                                        borderRadius: '0.75rem',
+                                        overflow: 'hidden',
+                                        boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
                                     }),
                                     option: (base, state) => ({
                                         ...base,
-                                        backgroundColor: state.data.isToday
-                                            ? (state.isFocused ? '#DBEAFE' : '#EFF6FF')
-                                            : (state.isFocused ? '#FEF3C7' : state.isSelected ? '#FDE68A' : 'white'),
-                                        color: state.data.isToday ? '#1E40AF' : '#92400E',
-                                        fontWeight: state.data.isToday ? '500' : '400',
-                                        cursor: 'pointer'
+                                        backgroundColor: state.isSelected 
+                                            ? 'hsl(var(--primary))' 
+                                            : state.data.isToday
+                                                ? state.isFocused ? 'hsl(var(--secondary))' : 'hsl(var(--accent))'
+                                                : state.isFocused ? 'hsl(var(--secondary))' : 'transparent',
+                                        color: state.isSelected 
+                                            ? 'hsl(var(--primary-foreground))' 
+                                            : state.data.isToday ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                                        padding: "12px 16px",
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        '&:active': {
+                                            backgroundColor: 'hsl(var(--primary))'
+                                        }
                                     })
                                 }}
                             />
-                        ) : (
-                            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-                                <p className="text-xs sm:text-sm text-red-800">
-                                    No available slots. Please try a different delivery speed or check back tomorrow.
-                                </p>
-                            </div>
-                        )}
-                        {errors.selectedSlot && (
-                            <p className="text-red-500 text-xs sm:text-sm mt-2">{errors.selectedSlot}</p>
-                        )}
-                    </Card>
 
-                    {/* Payment Section */}
-                    <Card ref={paymentRef} className="card-service p-4 sm:p-6 md:p-8 my-5 mx-2 sm:mx-0">
-                        <h3 className="text-base sm:text-lg mb-4 sm:mb-5 font-semibold text-foreground flex items-center space-x-2">
-                            <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                            <span>Select Payment Type</span>
-                        </h3>
-
-                        {/* Free Delivery Info */}
-                        {totalClothCount > 9 && deliverySpeed === 'normal' && (
-                            <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-300">
-                                <div className="flex items-center space-x-2">
-                                    <Gift className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                    <div>
-                                        <p className="text-sm font-semibold text-green-800">
-                                            🎉 Congratulations! Free Delivery Unlocked
-                                        </p>
-                                        <p className="text-xs text-green-700 mt-1">
-                                            You've selected {totalClothCount} items. Delivery charges waived!
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Delivery Charge Info */}
-                        {totalClothCount > 0 && totalClothCount <= 9 && deliverySpeed === 'normal' && (
-                            <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                                <div className="flex items-center space-x-2">
-                                    <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                                    <div>
-                                        <p className="text-sm font-medium text-blue-800">
-                                            Add {10 - totalClothCount} more item{10 - totalClothCount > 1 ? 's' : ''} to get FREE delivery!
-                                        </p>
-                                        <p className="text-xs text-blue-700 mt-1">
-                                            Current: {totalClothCount} items | Need: 10+ items
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        <label className="flex items-center mb-4 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                            <input
-                                type="radio"
-                                name="payment"
-                                value="online"
-                                className="hidden peer"
-                                checked={paymenttype === 'online payment'}
-                                onChange={() => selectpaymenttype('online payment')}
-                            />
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 mx-2 sm:mx-3 rounded-full border border-gray-400 peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center flex-shrink-0">
-                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white"></div>
-                            </div>
-                            <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary flex-shrink-0" />
-                            <span className="text-sm sm:text-base">Online Payment (pay after delivery)</span>
-                        </label>
-
-                        <label className="flex items-center cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                            <input
-                                type="radio"
-                                name="payment"
-                                value="cod"
-                                className="hidden peer"
-                                checked={paymenttype === 'cash on delivery'}
-                                onChange={() => selectpaymenttype('cash on delivery')}
-                            />
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 mx-2 sm:mx-3 rounded-full border border-gray-400 peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center flex-shrink-0">
-                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white"></div>
-                            </div>
-                            <HandCoins className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary flex-shrink-0" />
-                            <span className="text-sm sm:text-base">Cash on Delivery</span>
-                        </label>
-
-                        {errors.paymenttype && (
-                            <p className="text-red-500 text-xs sm:text-sm mt-2">{errors.paymenttype}</p>
-                        )}
-                    </Card>
-
-                    {/* Payment Summary */}
-                    <Card className="card-service p-4 sm:p-6 md:p-8 mx-2 sm:mx-0">
-                        <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center space-x-2 mb-4">
-                            <ListOrdered className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                            <span>Payment Summary</span>
-                        </h3>
-
-                        <div className='flex flex-col font-normal space-y-3 mx-2 sm:mx-4 md:mx-6 lg:mx-10 my-5'>
-                            {/* Item-wise breakdown */}
-                            {itemList.map((item) => {
-                                const count = itemCounts[item._id] || 0;
-                                if (count === 0) return null;
-                                const itemTotal = count * Number(item.price);
-                                return (
-                                    <div key={item._id} className='flex justify-between text-xs sm:text-sm md:text-base'>
-                                        <div>{item.name} × {count}</div>
-                                        <div>₹{itemTotal}</div>
-                                    </div>
-                                );
-                            })}
-
-                            {totalClothCount > 0 && (
-                                <>
-                                    <div className='w-full h-[1px] bg-gray-200 my-2'></div>
-                                    <div className='flex justify-between text-xs sm:text-sm md:text-base font-medium'>
-                                        <div>Items Subtotal ({totalClothCount} items)</div>
-                                        <div>₹{getItemsSubtotal()}</div>
-                                    </div>
-                                </>
+                            {errors.selectedSlot && (
+                                <motion.p
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-red-500 text-sm mt-2 flex items-center"
+                                >
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                    {errors.selectedSlot}
+                                </motion.p>
                             )}
+                        </Card>
+                    </motion.div>
 
-                            <div className='flex justify-between text-xs sm:text-sm md:text-base'>
-                                <div className="flex items-center space-x-2">
-                                    <span>Delivery Charges ({deliverySpeed})</span>
-                                    {isFreeDelivery && (
-                                        <span className="text-green-600 font-semibold text-xs">FREE</span>
-                                    )}
+                    {/* Payment Selection */}
+                    <motion.div variants={itemVariants}>
+                        <Card ref={paymentRef} className="p-6 sm:p-8 my-6 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
+                            <div className="flex items-center mb-6">
+                                <div className="bg-gradient-to-r from-primary to-primary/80 p-3 rounded-xl mr-4">
+                                    <Wallet className="w-7 h-7 text-white" />
                                 </div>
-                                <div className={isFreeDelivery ? 'line-through text-gray-400' : ''}>
-                                    ₹{deliveryCharges[deliverySpeed]}
+                                <div>
+                                    <h3 className="text-xl font-bold text-foreground">Payment Method</h3>
+                                    <p className="text-muted-foreground">Choose how you want to pay</p>
                                 </div>
                             </div>
 
-                            <div className='flex justify-between pb-5 text-xs sm:text-sm md:text-base'>
-                                <div>Handling Charges</div>
-                                <div>₹{handlingcharge}</div>
+                            <div className="space-y-4">
+                                <motion.label
+                                    whileHover={{ scale: 1.02 }}
+                                    className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                                        paymenttype === 'online payment'
+                                            ? 'border-primary bg-primary/5 shadow-md'
+                                            : 'border-secondary hover:border-primary/50 hover:bg-secondary/20'
+                                    }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="online"
+                                        className="hidden peer"
+                                        checked={paymenttype === 'online payment'}
+                                        onChange={() => selectpaymenttype('online payment')}
+                                    />
+                                    <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mr-4">
+                                        <div className={`w-2.5 h-2.5 rounded-full transition-all ${
+                                            paymenttype === 'online payment' ? 'bg-primary' : 'bg-transparent'
+                                        }`} />
+                                    </div>
+                                    <CreditCard className="w-6 h-6 text-primary mr-3" />
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-foreground">Online Payment</h4>
+                                        <p className="text-sm text-muted-foreground">Pay securely online after delivery</p>
+                                    </div>
+                                    <Shield className="w-5 h-5 text-green-500" />
+                                </motion.label>
+
+                                <motion.label
+                                    whileHover={{ scale: 1.02 }}
+                                    className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                                        paymenttype === 'cash on delivery'
+                                            ? 'border-primary bg-primary/5 shadow-md'
+                                            : 'border-secondary hover:border-primary/50 hover:bg-secondary/20'
+                                    }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="cod"
+                                        className="hidden peer"
+                                        checked={paymenttype === 'cash on delivery'}
+                                        onChange={() => selectpaymenttype('cash on delivery')}
+                                    />
+                                    <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mr-4">
+                                        <div className={`w-2.5 h-2.5 rounded-full transition-all ${
+                                            paymenttype === 'cash on delivery' ? 'bg-primary' : 'bg-transparent'
+                                        }`} />
+                                    </div>
+                                    <HandCoins className="w-6 h-6 text-primary mr-3" />
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-foreground">Cash on Delivery</h4>
+                                        <p className="text-sm text-muted-foreground">Pay cash when you receive your items</p>
+                                    </div>
+                                </motion.label>
                             </div>
 
-                            <div className='w-full h-[2px] bg-gray-200'></div>
-
-                            <div className='flex justify-between font-medium text-sm sm:text-base md:text-lg'>
-                                <div>Total Amount</div>
-                                <div className="text-primary">₹{getTotalAmount()}</div>
-                            </div>
-
-                            {isFreeDelivery && (
-                                <div className='flex justify-between text-xs text-green-600 font-medium'>
-                                    <div>You Saved</div>
-                                    <div>₹{deliveryCharges[deliverySpeed]}</div>
-                                </div>
+                            {errors.paymenttype && (
+                                <motion.p
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-red-500 text-sm mt-4 flex items-center"
+                                >
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                    {errors.paymenttype}
+                                </motion.p>
                             )}
+                        </Card>
+                    </motion.div>
 
-                            <div className='w-full h-[2px] bg-gray-200'></div>
-                        </div>
+                    {/* Order Summary */}
+                    <motion.div variants={itemVariants}>
+                        <Card className="p-6 sm:p-8 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
+                            <div className="flex items-center mb-6">
+                                <div className="bg-gradient-to-r from-primary to-primary/80 p-3 rounded-xl mr-4">
+                                    <ListOrdered className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-foreground">Order Summary</h3>
+                                    <p className="text-muted-foreground">Review your order details</p>
+                                </div>
+                            </div>
 
-                        <div className="pt-4">
-                            <Button
-                                onClick={handleSubmit}
-                                type="submit"
-                                className="btn-hero w-full text-sm sm:text-base md:text-lg py-3 sm:py-4 md:py-6"
-                                disabled={isLoading}
+                            <div className="space-y-4 mb-6">
+                                {/* Items Breakdown */}
+                                {itemList.map((item) => {
+                                    const count = itemCounts[item._id] || 0;
+                                    if (count === 0) return null;
+                                    const itemTotal = count * Number(item.price);
+                                    return (
+                                        <div key={item._id} className="flex justify-between items-center p-3 bg-secondary/20 rounded-lg">
+                                            <div className="flex items-center space-x-3">
+                                                <Shirt className="w-4 h-4 text-primary" />
+                                                <span className="font-medium">{item.name}</span>
+                                                <span className="text-sm text-muted-foreground">× {count}</span>
+                                            </div>
+                                            <span className="font-bold">₹{itemTotal}</span>
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Subtotal */}
+                                {totalClothCount > 0 && (
+                                    <div className="flex justify-between p-3 border-t border-b border-secondary/30">
+                                        <div className="font-medium">Items Subtotal ({totalClothCount} items)</div>
+                                        <div className="font-bold">₹{getItemsSubtotal()}</div>
+                                    </div>
+                                )}
+
+                                {/* Delivery Charges */}
+                                <div className="flex justify-between items-center p-3 bg-secondary/10 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <Truck className="w-4 h-4 text-primary" />
+                                        <span>Delivery Charges ({speedInfo[deliverySpeed].title})</span>
+                                        {isFreeDelivery && (
+                                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                                FREE
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className={isFreeDelivery ? 'line-through text-muted-foreground' : 'font-bold'}>
+                                        ₹{deliveryCharges[deliverySpeed]}
+                                    </div>
+                                </div>
+
+                                {/* Handling Charges */}
+                                <div className="flex justify-between p-3 bg-secondary/10 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <Tag className="w-4 h-4 text-primary" />
+                                        <span>Handling Charges</span>
+                                    </div>
+                                    <span className="font-bold">₹10</span>
+                                </div>
+
+                                {/* Total */}
+                                <motion.div
+                                    initial={{ scale: 0.95 }}
+                                    animate={{ scale: 1 }}
+                                    className="flex justify-between items-center p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border-2 border-primary/20"
+                                >
+                                    <div className="font-bold text-lg">Total Amount</div>
+                                    <div className="text-2xl font-bold text-primary">₹{getTotalAmount()}</div>
+                                </motion.div>
+
+                                {isFreeDelivery && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center space-x-2">
+                                                <Star className="w-4 h-4 text-green-600" />
+                                                <span className="font-medium text-green-800">You Saved</span>
+                                            </div>
+                                            <span className="font-bold text-green-700">₹{deliveryCharges[deliverySpeed]}</span>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
+
+                            {/* Submit Button */}
+                            <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                             >
-                                {isLoading ? 'Saving...' : 'Proceed & Confirm Address'}
-                            </Button>
-                        </div>
-                    </Card>
-                </div>
+                                <Button
+                                    onClick={handleSubmit}
+                                    disabled={isLoading}
+                                    className="w-full py-6 text-lg font-bold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-xl hover:shadow-2xl transition-all duration-300 group"
+                                >
+                                    {isLoading ? (
+                                        <div className="flex items-center justify-center">
+                                            <motion.div
+                                                animate={{ rotate: 360 }}
+                                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
+                                            />
+                                            Processing...
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center">
+                                            <span>Proceed to Confirm Address</span>
+                                            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        </div>
+                                    )}
+                                </Button>
+                            </motion.div>
+                        </Card>
+                    </motion.div>
+                </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

@@ -23,10 +23,13 @@ const Header = () => {
         <div className="flex items-center justify-between 
         h-[64px]">
           {/* Logo */}
-          <Link to={User?.isagent ? '/agent/home' : "/"} className="flex items-center space-x-2">
-             <img src='./assets/logo.png' 
-             className='w-44 h-[85px]' />
-          </Link>
+         <Link to={User?.isagent ? '/agent/home' : "/"} className="flex items-center space-x-2">
+  <img 
+    src='/assets/logo.png'
+    alt="Logo"
+    className='w-44 h-16 object-contain' // Adjust height to match header
+  />
+</Link>
 
           {/* Desktop Navigation */}
 

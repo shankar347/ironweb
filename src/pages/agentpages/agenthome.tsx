@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Package, DollarSign, Clock, CheckCircle, X, QrCode, User, Phone, MapPin, Box, Copy, ArrowUpDown, Check, RefreshCw, ArrowRight, HardDrive, Truck } from 'lucide-react';
+import { Package, DollarSign, Clock, CheckCircle, X, QrCode, User, Phone, MapPin, Box, Copy, ArrowUpDown, Truck } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
 import qrcode from '../../assets/qrcode.jpeg'
 import { toast } from 'react-toastify';
 import SlideToUpdateButton from '../../components/slidebuton';
-
-
 
 const Button = ({ children, onClick, className }: any) => (
     <button onClick={onClick} className={className}>{children}</button>
@@ -36,7 +34,7 @@ interface OrderFlow {
 
 interface Order {
     _id: string;
-    orderid:string;
+    orderid: string;
     userid: string;
     user_name: string;
     user_phoneno: string;
@@ -71,58 +69,22 @@ const Agenthome: React.FC = () => {
     const [qrScanned, setQrScanned] = useState<boolean>(false);
     const [updating, setUpdating] = useState<boolean>(false);
 
-    // Swap functionality states
+    // Swap functionality states - simplified
     const [isSwapMode, setIsSwapMode] = useState<boolean>(false);
     const [selectedForSwap, setSelectedForSwap] = useState<string[]>([]);
-    const [isOrderLocked, setIsOrderLocked] = useState<boolean>(false);
 
     useEffect(() => {
-        checkOrderLock();
         getAgentorders();
     }, []);
-
-    const checkOrderLock = () => {
-        const lockData = localStorage.getItem('orderLock');
-        if (lockData) {
-            const { timestamp } = JSON.parse(lockData);
-            const lockDate = new Date(timestamp);
-            const now = new Date();
-            
-            if (lockDate.toDateString() === now.toDateString()) {
-                setIsOrderLocked(true);
-            } else {
-                localStorage.removeItem('orderLock');
-                localStorage.removeItem('ordersSequence');
-                setIsOrderLocked(false);
-            }
-        }
-    };
 
     const getAgentorders = async (): Promise<void> => {
         try {
             setLoading(true);
-            // Mock data for demo
-
-            const res=await fetch(`${API_URL}/admin/getagenttodayorders`,{
-                credentials:'include'
+            const res = await fetch(`${API_URL}/admin/getagenttodayorders`, {
+                credentials: 'include'
             })
-     
-            const data=await res.json()
-            const savedSequence = localStorage.getItem('ordersSequence');
-            if (savedSequence) {
-                const sequence = JSON.parse(savedSequence);
-                if (sequence.length === data.data.length) {
-                    const reorderedOrders = sequence.map((id: string) => 
-                        data.data.find((order: Order) => order._id === id)
-                    ).filter(Boolean);
-                    setOrders(reorderedOrders);
-                } else {
-                    setOrders(data.data);
-                }
-            } else {
-                setOrders(data.data);
-            }
-            
+            const data = await res.json()
+            setOrders(data.data);
         } catch (err) {
             console.log(err);
         } finally {
@@ -131,7 +93,7 @@ const Agenthome: React.FC = () => {
     };
 
     const updateorderstatus = async (order_id: string, step: string): Promise<void> => {
-       try {
+        try {
             setUpdating(true);
             const res = await fetch(`${API_URL}/orders/updateorder`, {
                 credentials: 'include',
@@ -227,7 +189,7 @@ const Agenthome: React.FC = () => {
         }
 
         // Get the indices of all selected orders
-        const selectedIndices = selectedForSwap.map(id => 
+        const selectedIndices = selectedForSwap.map(id =>
             orders.findIndex(order => order._id === id)
         ).filter(index => index !== -1);
 
@@ -255,29 +217,8 @@ const Agenthome: React.FC = () => {
 
         setOrders(newOrders);
         setSelectedForSwap([]);
-        toast.success(`Successfully swapped ${selectedOrders.length} orders!`);
-    };
-
-    const handleCompleteSwap = () => {
-        const orderIds = orders.map(order => order._id);
-        localStorage.setItem('ordersSequence', JSON.stringify(orderIds));
-        
-        const lockData = {
-            timestamp: new Date().toISOString()
-        };
-        localStorage.setItem('orderLock', JSON.stringify(lockData));
-        
-        setIsOrderLocked(true);
         setIsSwapMode(false);
-        setSelectedForSwap([]);
-        toast.success('Order sequence locked successfully!');
-    };
-
-    const handleReswap = () => {
-        localStorage.removeItem('orderLock');
-        localStorage.removeItem('ordersSequence');
-        setIsOrderLocked(false);
-        toast.success('Order sequence unlocked. You can now reorder.');
+        toast.success(`Successfully swapped ${selectedOrders.length} orders!`);
     };
 
     interface StatCardProps {
@@ -317,10 +258,7 @@ const Agenthome: React.FC = () => {
                     </button>
                 </div>
 
-                {/* <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 mb-6"> */}
-                           <img src={qrcode} alt="qrcode"  className='w-full h-full mb-6'/>
-                {/* </div> */}
-
+                <img src={qrcode} alt="qrcode" className='w-full h-full mb-6' />
 
                 <button
                     onClick={handleQRScanned}
@@ -348,26 +286,26 @@ const Agenthome: React.FC = () => {
             navigator.clipboard.writeText(customerPhone).then(() => {
                 toast.success('Phone number copied to clipboard');
             })
-            .catch((err) => {
-                console.log(err);
-                toast.error("Error in copy the phone number");
-            });
+                .catch((err) => {
+                    console.log(err);
+                    toast.error("Error in copy the phone number");
+                });
         };
 
         const handleCopyaddress = () => {
             navigator.clipboard.writeText(customerAddress).then(() => {
                 toast.success('Address copied to clipboard');
             })
-            .catch((err) => {
-                console.log(err);
-                toast.error("Error in copy the Address");
-            });
+                .catch((err) => {
+                    console.log(err);
+                    toast.error("Error in copy the Address");
+                });
         };
 
         const handleOpenMap = () => {
             const encodedAddress = encodeURIComponent(customerAddress);
             const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
-            window.open(mapUrl,'_blank');
+            window.open(mapUrl, '_blank');
         };
 
         return (
@@ -426,7 +364,7 @@ const Agenthome: React.FC = () => {
                             </div>
                         </div>
                         <div className='flex flex-col items-center justify-center flex-1'>
-                            <Button 
+                            <Button
                                 onClick={() => handleOpenMap()}
                                 className={`${GRADIENT_CLASS} text-white rounded-lg shadow-md w-[90%] py-3 font-semibold hover:opacity-90 transition-all`}>
                                 Track Order
@@ -501,10 +439,10 @@ const Agenthome: React.FC = () => {
                         </button>
                     )}
 
-<SlideToUpdateButton handleStatusUpdate={handleStatusUpdate}
-canUpdate={canUpdate}
-updating={updating}
-GRADIENT_CLASS={GRADIENT_CLASS}  /> 
+                    <SlideToUpdateButton handleStatusUpdate={handleStatusUpdate}
+                        canUpdate={canUpdate}
+                        updating={updating}
+                        GRADIENT_CLASS={GRADIENT_CLASS} />
                 </div>
             </div>
         );
@@ -544,20 +482,8 @@ GRADIENT_CLASS={GRADIENT_CLASS}  />
                 <div className="mb-6 animate-slideUp" style={{ animationDelay: '400ms' }}>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                         <h2 className="text-2xl md:text-3xl font-bold text-gray-800">Your Orders</h2>
-                        
-                        {isOrderLocked && (
-                            <button
-                                onClick={handleReswap}
-                                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl flex items-center gap-2 text-sm md:text-base"
-                            >
-                                <RefreshCw className="w-4 h-4 md:w-5 md:h-5" />
-                                Re-Swap
-                            </button>
-                        )}
-                    </div>
 
-                    {!isOrderLocked && orders.length > 0 && (
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        {orders.length > 0 && (
                             <button
                                 onClick={handleSwapToggle}
                                 className={`${isSwapMode ? 'bg-red-500 hover:bg-red-600' : GRADIENT_CLASS} text-white px-5 py-2.5 rounded-xl font-bold hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-xl flex items-center justify-center gap-2 text-sm md:text-base`}
@@ -565,7 +491,7 @@ GRADIENT_CLASS={GRADIENT_CLASS}  />
                                 {isSwapMode ? (
                                     <>
                                         <X className="w-4 h-4 md:w-5 md:h-5" />
-                                        Cancel
+                                        Cancel Swap
                                     </>
                                 ) : (
                                     <>
@@ -574,168 +500,155 @@ GRADIENT_CLASS={GRADIENT_CLASS}  />
                                     </>
                                 )}
                             </button>
-                            
-                            {isSwapMode && (
-                                <>
-                                    <button
-                                        onClick={performSwap}
-                                        disabled={selectedForSwap.length < 2}
-                                        className={`${selectedForSwap.length < 2 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl flex items-center justify-center gap-2 text-sm md:text-base`}
-                                    >
-                                        <ArrowUpDown className="w-4 h-4 md:w-5 md:h-5" />
-                                        Swap ({selectedForSwap.length})
-                                    </button>
-                                    <button
-                                        onClick={handleCompleteSwap}
-                                        className="bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl flex items-center justify-center gap-2 text-sm md:text-base"
-                                    >
-                                        <Check className="w-4 h-4 md:w-5 md:h-5" />
-                                        Complete
-                                    </button>
-                                </>
-                            )}
+                        )}
+                    </div>
+
+                    {isSwapMode && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div className="text-sm text-blue-700">
+                                    <span className="font-semibold">Swap Mode:</span> Select at least 2 orders, then click "Swap Selected Orders"
+                                </div>
+                                <button
+                                    onClick={performSwap}
+                                    disabled={selectedForSwap.length < 2}
+                                    className={`${selectedForSwap.length < 2 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white px-5 py-2.5 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl flex items-center justify-center gap-2 text-sm md:text-base`}
+                                >
+                                    <ArrowUpDown className="w-4 h-4 md:w-5 md:h-5" />
+                                    Swap Selected Orders ({selectedForSwap.length})
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
-                  
 
-                 {
-                    stats.completed !== orders.length ? 
-                    (
-                        <div>
-  {orders.length === 0 ? (
-                    <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
-                        <Package className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
-                        <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
-                            No orders for agent Today
-                        </div>
-                    </div>
-                ) : (
-                    <div className="space-y-6">
-                        {orders.map((order, index) => {
-                            const nextStep = getNextIncompleteStep(order.order_flow);
-                            const currentIndex = getCurrentStepIndex(order.order_flow);
-                            const progress = (currentIndex / order.order_flow.length) * 100;
-                            const isSelected = selectedForSwap.includes(order._id);
-                            const selectionNumber = selectedForSwap.indexOf(order._id) + 1;
-
-                            return (
-                                
-                                progress !== 100 && (
-                                      <div
-                                    key={order._id}
-                                    className="bg-white rounded-2xl p-4 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 animate-slideUp relative"
-                                    style={{ animationDelay: `${500 + index * 100}ms` }}
-                                >
-                                    {/* Checkbox for swap mode */}
-                                    {isSwapMode && (
-                                        <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
-                                            <div
-                                                onClick={() => handleOrderCheckboxClick(order._id)}
-                                                className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-300 ${
-                                                    isSelected 
-                                                        ? 'bg-blue-500 text-white shadow-lg scale-110' 
-                                                        : 'bg-gray-200 hover:bg-gray-300'
-                                                }`}
-                                            >
-                                                {isSelected ? (
-                                                    <span className="text-lg md:text-xl font-bold">{selectionNumber}</span>
-                                                ) : (
-                                                    <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-gray-400 rounded"></div>
-                                                )}
-                                            </div>
+                {
+                    stats.completed !== orders.length ?
+                        (
+                            <div>
+                                {orders.length === 0 ? (
+                                    <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
+                                        <Package className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
+                                        <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
+                                            No orders for agent Today
                                         </div>
-                                    )}
-
-                                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 justify-between mb-4">
-  <span className="font-mono text-sm md:text-base font-semibold text-gray-700 bg-gray-100 px-3 md:px-4 py-2 rounded-lg">
-                                                    #{ order.orderid ||  order._id.slice(-8)}
-                                                </span>
-                                                <div className='flex gap-2 items-baseline'>
-                                                    
-                                                  <span className="font-mono text-sm md:text-base font-semibold text-gray-700 bg-gray-100 px-3 md:px-4 py-2 rounded-lg">
-                                                    { order.user_name.trim().length > 13 ? 
-                                                    order.user_name.slice(0,13) + '...' :  order.user_name   }
-                                                </span>
-                                                
-                                                <div className={`w-6 h-6 md:w-7 md:h-7 ${GRADIENT_CLASS} rounded-full text-white items-center flex justify-center text-center text-xs md:text-sm font-bold`}>
-                                                    {index + 1}
-                                                </div>
-                                                </div>
-                                              
-
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4">
-                                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
-                                                    <p className="text-xs text-blue-700 font-semibold mb-1">Amount</p>
-                                                    <p className="font-bold text-blue-800 text-base md:text-lg">₹{order.order_totalamount}</p>
-                                                </div>
-                                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
-                                                    <p className="text-xs text-blue-700 font-semibold mb-1">Clothes</p>
-                                                    <p className="font-bold text-blue-800 text-base md:text-lg">{order.order_totalcloths}</p>
-                                                </div>
-                                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
-                                                    <p className="text-xs text-blue-700 font-semibold mb-1">Slot</p>
-                                                    <p className="font-bold text-blue-800 text-sm md:text-base">{order.order_slot}</p>
-                                                </div>
-                                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
-                                                    <p className="text-xs text-blue-700 font-semibold mb-1">Delivery type</p>
-                                                    <p className="font-bold text-blue-800 text-sm md:text-base capitalize">{order.order_deliveryspeed}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="mb-3">
-                                                <div className="flex justify-between text-sm text-gray-600 font-medium mb-2">
-                                                    <span>Order Progress</span>
-                                                    <span className="font-bold">{Math.round(progress)}%</span>
-                                                </div>
-                                                <div className="w-full bg-gray-200 rounded-full h-2.5 md:h-3 shadow-inner">
-                                                    <div
-                                                        className={`${GRADIENT_CLASS} h-2.5 md:h-3 rounded-full transition-all duration-500 shadow-md`}
-                                                        style={{ width: `${progress}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-
-                                            {nextStep && (
-                                                <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg">
-                                                    <p className="text-xs md:text-sm text-gray-700">
-                                                        Next Step: <span className="font-bold text-blue-700">{nextStep.step}</span>
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {nextStep && !isSwapMode && (
-                                            <button
-                                                onClick={() => openStatusModal(order)}
-                                                className={`${GRADIENT_CLASS} text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold hover:opacity-90 transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-xl text-sm md:text-base`}
-                                            >
-                                                Change Status
-                                            </button>
-                                        )}
                                     </div>
-                                </div>
-                                )
-                                  
-                            );
-                        })}
-                    </div>
-                )}
-                        </div>
-                    ) :  <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
-                        <Truck className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
-                        <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
-                            No active  orders for agent now
-                        </div>
-                    </div>
-                 }
+                                ) : (
+                                    <div className="space-y-6">
+                                        {orders.map((order, index) => {
+                                            const nextStep = getNextIncompleteStep(order.order_flow);
+                                            const currentIndex = getCurrentStepIndex(order.order_flow);
+                                            const progress = (currentIndex / order.order_flow.length) * 100;
+                                            const isSelected = selectedForSwap.includes(order._id);
+                                            const selectionNumber = selectedForSwap.indexOf(order._id) + 1;
 
+                                            return (
+                                                progress !== 100 && (
+                                                    <div
+                                                        key={order._id}
+                                                        className="bg-white rounded-2xl p-4 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 animate-slideUp relative"
+                                                        style={{ animationDelay: `${500 + index * 100}ms` }}
+                                                    >
+                                                        {/* Checkbox for swap mode */}
+                                                        {isSwapMode && (
+                                                            <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
+                                                                <div
+                                                                    onClick={() => handleOrderCheckboxClick(order._id)}
+                                                                    className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-300 ${isSelected
+                                                                        ? 'bg-blue-500 text-white shadow-lg scale-110'
+                                                                        : 'bg-gray-200 hover:bg-gray-300'
+                                                                        }`}
+                                                                >
+                                                                    {isSelected ? (
+                                                                        <span className="text-lg md:text-xl font-bold">{selectionNumber}</span>
+                                                                    ) : (
+                                                                        <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-gray-400 rounded"></div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
 
-              
+                                                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-3 justify-between mb-4">
+                                                                    <span className="font-mono text-sm md:text-base font-semibold text-gray-700 bg-gray-100 px-3 md:px-4 py-2 rounded-lg">
+                                                                        #{order.orderid || order._id.slice(-8)}
+                                                                    </span>
+                                                                    <div className='flex gap-2 items-baseline'>
+                                                                        <span className="font-mono text-sm md:text-base font-semibold text-gray-700 bg-gray-100 px-3 md:px-4 py-2 rounded-lg">
+                                                                            {order.user_name.trim().length > 13 ?
+                                                                                order.user_name.slice(0, 13) + '...' : order.user_name}
+                                                                        </span>
+                                                                        <div className={`w-6 h-6 md:w-7 md:h-7 ${GRADIENT_CLASS} rounded-full text-white items-center flex justify-center text-center text-xs md:text-sm font-bold`}>
+                                                                            {index + 1}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4">
+                                                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
+                                                                        <p className="text-xs text-blue-700 font-semibold mb-1">Amount</p>
+                                                                        <p className="font-bold text-blue-800 text-base md:text-lg">₹{order.order_totalamount}</p>
+                                                                    </div>
+                                                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
+                                                                        <p className="text-xs text-blue-700 font-semibold mb-1">Clothes</p>
+                                                                        <p className="font-bold text-blue-800 text-base md:text-lg">{order.order_totalcloths}</p>
+                                                                    </div>
+                                                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
+                                                                        <p className="text-xs text-blue-700 font-semibold mb-1">Slot</p>
+                                                                        <p className="font-bold text-blue-800 text-sm md:text-base">{order.order_slot}</p>
+                                                                    </div>
+                                                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl">
+                                                                        <p className="text-xs text-blue-700 font-semibold mb-1">Delivery type</p>
+                                                                        <p className="font-bold text-blue-800 text-sm md:text-base capitalize">{order.order_deliveryspeed}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="mb-3">
+                                                                    <div className="flex justify-between text-sm text-gray-600 font-medium mb-2">
+                                                                        <span>Order Progress</span>
+                                                                        <span className="font-bold">{Math.round(progress)}%</span>
+                                                                    </div>
+                                                                    <div className="w-full bg-gray-200 rounded-full h-2.5 md:h-3 shadow-inner">
+                                                                        <div
+                                                                            className={`${GRADIENT_CLASS} h-2.5 md:h-3 rounded-full transition-all duration-500 shadow-md`}
+                                                                            style={{ width: `${progress}%` }}
+                                                                        ></div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {nextStep && (
+                                                                    <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg">
+                                                                        <p className="text-xs md:text-sm text-gray-700">
+                                                                            Next Step: <span className="font-bold text-blue-700">{nextStep.step}</span>
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {nextStep && !isSwapMode && (
+                                                                <button
+                                                                    onClick={() => openStatusModal(order)}
+                                                                    className={`${GRADIENT_CLASS} text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold hover:opacity-90 transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-xl text-sm md:text-base`}
+                                                                >
+                                                                    Change Status
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        ) : <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
+                            <Truck className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
+                            <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
+                                No active  orders for agent now
+                            </div>
+                        </div>
+                }
             </div>
 
             {showStatusModal && <StatusUpdateModal />}

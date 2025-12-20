@@ -258,13 +258,31 @@ const OrdersPage: React.FC = () => {
         });
     };
 
-    // Get processing orders
-    const getProcessingOrders = (): Order[] => {
-        return allOrders.filter(order => {
-            const status = getCurrentStatus(order.order_flow);
-            return status !== 'Completed' && status !== 'Clothes delivered';
-        });
-    };
+    const isToday = (dateString: string): boolean => {
+    const date = new Date(dateString);
+    const today = new Date();
+
+    return (
+        date.getFullYear() === today.getFullYear() &&
+        date.getMonth() === today.getMonth() &&
+        date.getDate() === today.getDate()
+    );
+};
+
+
+
+const getProcessingOrders = (): Order[] => {
+    return allOrders.filter(order => {
+        const status = getCurrentStatus(order.order_flow);
+
+        const isProcessing =
+            status !== 'Completed' && status !== 'Clothes delivered';
+
+        const isTodayOrder = isToday(order.createdAt);
+
+        return isProcessing && isTodayOrder;
+    });
+};
 
     // Get failed orders
     const getFailedOrders = (): Order[] => {
