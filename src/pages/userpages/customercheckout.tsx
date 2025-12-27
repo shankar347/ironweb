@@ -24,20 +24,79 @@ const Ordersummary = () => {
     const [showTerms, setShowTerms] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const steamcontext = useContext(SteamContext);
-    const { formData, setFormData, orderdetails, setorderdetails } = steamcontext;
+    const { orderdetails, setorderdetails } = steamcontext;
+    const [localOrderDetails, setLocalOrderDetails] = useState<any>(null);
 
     const navigate = useNavigate();
 
     useEffect(() => {
         const checkdetails = localStorage.getItem('orderdetails');
         if (checkdetails) {
-            setorderdetails(JSON.parse(checkdetails));
+            const parsedDetails = JSON.parse(checkdetails);
+            setLocalOrderDetails(parsedDetails);
+            setorderdetails(parsedDetails);
+        } else {
+            toast.error('No order details found. Please start over.');
+            navigate('/customer/bookslot');
         }
     }, []);
 
+    // Format data for API
+    const prepareApiData = () => {
+        if (!localOrderDetails) return null;
+
+        return {
+            userdetails: {
+                area: localOrderDetails?.userdetails?.area || '',
+                city: localOrderDetails?.userdetails?.city || '',
+                houseno: localOrderDetails?.userdetails?.houseno || '',
+                name: localOrderDetails?.userdetails?.name || '',
+                phoneno: localOrderDetails?.userdetails?.phoneno || '',
+                pincode: localOrderDetails?.userdetails?.pincode || '',
+                streetname: localOrderDetails?.userdetails?.streetname || ''
+            },
+            otherdetails: {
+                paymenttype: localOrderDetails?.otherdetails?.paymenttype || '',
+                timeslot: localOrderDetails?.otherdetails?.timeslot || '',
+                totalamount: String(localOrderDetails?.otherdetails?.totalamount || '0'),
+                totalcloths: String(localOrderDetails?.otherdetails?.totalcloths || '0'),
+                deliverySpeed: localOrderDetails?.otherdetails?.deliverySpeed || 'normal'
+            },
+            order_cloths: localOrderDetails?.order_cloths || []
+        };
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
         if (!acceptedTerms) {
             toast.error('Please accept the terms and conditions to proceed');
+            return;
+        }
+
+        const apiData = prepareApiData();
+        if (!apiData) {
+            toast.error('Order details are incomplete');
+            return;
+        }
+
+        // Validate required fields
+        if (!apiData.userdetails.name || !apiData.userdetails.phoneno || 
+            !apiData.userdetails.houseno || !apiData.userdetails.pincode) {
+            toast.error('Please complete your address details');
+            navigate('/customer/confirmaddress');
+            return;
+        }
+
+        if (!apiData.otherdetails.paymenttype || !apiData.otherdetails.timeslot) {
+            toast.error('Order details are incomplete');
+            navigate('/customer/bookslot');
+            return;
+        }
+
+        if (!apiData.order_cloths || apiData.order_cloths.length === 0) {
+            toast.error('No items selected');
+            navigate('/customer/bookslot');
             return;
         }
 
@@ -46,24 +105,38 @@ const Ordersummary = () => {
             const res = await fetch(`${API_URL}/orders/createorder`, {
                 method: 'POST',
                 headers: {
-                    'content-type': 'application/json'
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(orderdetails),
+                body: JSON.stringify(apiData),
                 credentials: 'include',
             });
 
             const data = await res.json();
 
-            if (data?.error) {
-                toast.error(data?.error);
+            if (res.status === 401) {
+                toast.error('Please login to place an order');
+                navigate('/login');
                 return;
             }
 
+            if (!res.ok) {
+                throw new Error(data?.error || 'Failed to create order');
+            }
+
+            if (data?.error) {
+                toast.error(data.error);
+                return;
+            }
+
+            // Clear localStorage and context
             localStorage.removeItem('orderdetails');
-            toast.success(data?.message);
-            navigate('/');
-        } catch (error) {
-            toast.error('Something went wrong. Please try again.');
+            setorderdetails(null);
+            
+            toast.success('Order placed successfully!');
+            navigate('/customer/ordertrack'); // Or navigate to order confirmation page
+        } catch (error: any) {
+            console.error('Order creation error:', error);
+            toast.error(error.message || 'Something went wrong. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -179,6 +252,18 @@ const Ordersummary = () => {
         </AnimatePresence>
     );
 
+    // Show loading if no data
+    if (!localOrderDetails) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading order details...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <motion.div 
             initial={{ opacity: 0 }}
@@ -225,35 +310,84 @@ const Ordersummary = () => {
                         </motion.p>
                     </div>
 
+                    {/* Items Details Card */}
+                    {localOrderDetails?.order_cloths && localOrderDetails.order_cloths.length > 0 && (
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.6 }}
+                        >
+                            <Card className="p-8 mb-6 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
+                                <div className="flex items-center mb-6">
+                                    <div className="bg-primary/10 p-3 rounded-xl mr-4">
+                                        <ShoppingBasketIcon className="w-7 h-7 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-foreground">Selected Items</h3>
+                                        <p className="text-muted-foreground">Your order items</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {localOrderDetails.order_cloths.map((item: any, index: number) => (
+                                        <motion.div
+                                            key={index}
+                                            initial={{ x: -20, opacity: 0 }}
+                                            animate={{ x: 0, opacity: 1 }}
+                                            transition={{ delay: 0.7 + index * 0.05 }}
+                                            className="flex justify-between items-center p-3 rounded-xl bg-secondary/20 hover:bg-secondary/30 transition-colors"
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <div className="bg-primary/10 p-2 rounded-lg">
+                                                    <Shirt className="w-4 h-4 text-primary" />
+                                                </div>
+                                                <div>
+                                                    <span className="font-medium text-foreground">{item.item}</span>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {item.quantity} × ₹{item.cost}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className="font-bold text-lg text-foreground">
+                                                ₹{Number(item.cost) * Number(item.quantity)}
+                                            </span>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </Card>
+                        </motion.div>
+                    )}
+
                     {/* Order Details Card */}
                     <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.6 }}
+                        transition={{ delay: 0.8 }}
                     >
                         <Card className="p-8 mb-6 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
                             <div className="flex items-center mb-6">
                                 <div className="bg-primary/10 p-3 rounded-xl mr-4">
-                                    <ShoppingBasketIcon className="w-7 h-7 text-primary" />
+                                    <Receipt className="w-7 h-7 text-primary" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-foreground">Cloth & Slot Details</h3>
+                                    <h3 className="text-xl font-bold text-foreground">Order Summary</h3>
                                     <p className="text-muted-foreground">Your order specifications</p>
                                 </div>
                             </div>
 
                             <div className="space-y-4">
                                 {[
-                                    { label: 'No of Cloths', value: `${orderdetails?.otherdetails?.totalcloths} Nos`, icon: Shirt },
-                                    { label: 'Selected Slot', value: orderdetails?.otherdetails?.timeslot, icon: Clock },
-                                    { label: 'Payment Type', value: orderdetails?.otherdetails?.paymenttype, icon: CreditCard },
-                                    { label: 'Total Amount', value: `₹${orderdetails?.otherdetails?.totalamount}`, icon: BanknoteIcon }
+                                    { label: 'No of Cloths', value: `${localOrderDetails?.otherdetails?.totalcloths || '0'} Nos`, icon: Shirt },
+                                    { label: 'Selected Slot', value: localOrderDetails?.otherdetails?.timeslot || 'Not selected', icon: Clock },
+                                    { label: 'Payment Type', value: localOrderDetails?.otherdetails?.paymenttype || 'Not selected', icon: CreditCard },
+                                    { label: 'Delivery Speed', value: localOrderDetails?.otherdetails?.deliverySpeed || 'normal', icon: Truck },
+                                    { label: 'Total Amount', value: `₹${localOrderDetails?.otherdetails?.totalamount || '0'}`, icon: BanknoteIcon }
                                 ].map((item, index) => (
                                     <motion.div
                                         key={item.label}
                                         initial={{ x: -20, opacity: 0 }}
                                         animate={{ x: 0, opacity: 1 }}
-                                        transition={{ delay: 0.7 + index * 0.1 }}
+                                        transition={{ delay: 0.9 + index * 0.1 }}
                                         className="flex justify-between items-center p-4 rounded-xl bg-secondary/20 hover:bg-secondary/30 transition-colors"
                                     >
                                         <div className="flex items-center space-x-3">
@@ -273,7 +407,7 @@ const Ordersummary = () => {
                     <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.8 }}
+                        transition={{ delay: 1 }}
                     >
                         <Card className="p-8 mb-6 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
                             <div className="flex items-center mb-6">
@@ -290,15 +424,15 @@ const Ordersummary = () => {
                                 <motion.div
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: 0.9 }}
+                                    transition={{ delay: 1.1 }}
                                     className="flex items-start space-x-4 p-4 rounded-xl bg-secondary/20"
                                 >
                                     <User className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                                     <div>
-                                        <h4 className="font-bold text-foreground text-lg">{orderdetails?.userdetails?.name}</h4>
+                                        <h4 className="font-bold text-foreground text-lg">{localOrderDetails?.userdetails?.name || 'Not provided'}</h4>
                                         <p className="text-muted-foreground flex items-center mt-1">
                                             <Phone className="w-4 h-4 mr-2" />
-                                            {orderdetails?.userdetails?.phoneno}
+                                            {localOrderDetails?.userdetails?.phoneno || 'Not provided'}
                                         </p>
                                     </div>
                                 </motion.div>
@@ -306,7 +440,7 @@ const Ordersummary = () => {
                                 <motion.div
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: 1 }}
+                                    transition={{ delay: 1.2 }}
                                     className="p-4 rounded-xl bg-secondary/20"
                                 >
                                     <div className="flex items-center mb-3">
@@ -315,11 +449,11 @@ const Ordersummary = () => {
                                     </div>
                                     <div className="ml-7 space-y-1">
                                         <p className="text-foreground">
-                                            {orderdetails?.userdetails?.houseno}, {orderdetails?.userdetails?.streetname}
+                                            {localOrderDetails?.userdetails?.houseno || 'Not provided'}, {localOrderDetails?.userdetails?.streetname || ''}
                                         </p>
-                                        <p className="text-foreground">{orderdetails?.userdetails?.area}</p>
+                                        <p className="text-foreground">{localOrderDetails?.userdetails?.area || ''}</p>
                                         <p className="text-foreground font-medium">
-                                            {orderdetails?.userdetails?.city} - {orderdetails?.userdetails?.pincode}
+                                            {localOrderDetails?.userdetails?.city || ''} - {localOrderDetails?.userdetails?.pincode || ''}
                                         </p>
                                     </div>
                                 </motion.div>
@@ -331,7 +465,7 @@ const Ordersummary = () => {
                     <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 1.1 }}
+                        transition={{ delay: 1.3 }}
                     >
                         <Card className="p-8 mb-6 border-2 border-secondary/30 rounded-2xl">
                             <div className="flex items-center justify-between mb-4">
@@ -392,7 +526,7 @@ const Ordersummary = () => {
                     <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 1.2 }}
+                        transition={{ delay: 1.4 }}
                         className="flex flex-col sm:flex-row gap-4"
                     >
                         <Button

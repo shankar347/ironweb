@@ -132,7 +132,7 @@ const BookSlot = () => {
         const now = currentTime;
         const currentHour = now.getHours();
         const currentMinutes = now.getMinutes();
-        const bufferHours = 3
+        const bufferHours = speedInfo[deliverySpeed].bufferHours;
 
         const currentTimeDecimal = currentHour + (currentMinutes / 60);
         const deadlineTimeDecimal = endHour - bufferHours;
@@ -288,26 +288,26 @@ const BookSlot = () => {
         const isTomorrow = selectedSlot?.includes('__tomorrow') || false;
         const actualSlot = isTomorrow ? selectedSlot?.replace('__tomorrow', '') : selectedSlot;
 
-        const selectedItems = itemList
+        // Prepare order_cloths in the format expected by the API
+        const order_cloths = itemList
             .filter(item => itemCounts[item._id] > 0)
             .map(item => ({
-                itemId: item._id,
-                name: item.name,
-                price: item.price,
-                quantity: itemCounts[item._id]
+                item: item.name,        // Changed from 'name' to 'item'
+                cost: String(item.price), // Changed from 'price' to 'cost' and ensure string
+                quantity: String(itemCounts[item._id]) // Ensure string
             }));
 
         const updatedOrderDetails = {
-            ...orderdetails,
+            userdetails: orderdetails?.userdetails || {},
             otherdetails: {
-                items: selectedItems,
-                totalcloths: totalCount,
-                timeslot: actualSlot,
                 paymenttype,
-                totalamount: getTotalAmount(),
+                timeslot: actualSlot,
+                totalamount: String(getTotalAmount()), // Ensure string
+                totalcloths: String(totalCount),      // Ensure string
                 deliverySpeed,
                 isNextDay: isTomorrow
-            }
+            },
+            order_cloths // Add order_cloths array in the expected format
         };
 
         setorderdetails(updatedOrderDetails);
@@ -341,12 +341,6 @@ const BookSlot = () => {
             opacity: 1,
             transition: { type: "spring", stiffness: 100 }
         }
-    };
-
-    const speedCardVariants = {
-        normal: { scale: 1 },
-        hover: { scale: 1.05 },
-        selected: { scale: 1.1 }
     };
 
     return (
@@ -396,154 +390,7 @@ const BookSlot = () => {
                         </motion.p>
                     </motion.div>
 
-    <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6 md:gap-4">
-                            {/* Normal Speed */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setDeliverySpeed('normal')}
-                                    onMouseEnter={() => setHoveredSpeed('normal')}
-                                    onMouseLeave={() => setHoveredSpeed(null)}
-                                    className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${deliverySpeed === 'normal'
-                                            ? 'border-blue-500 bg-blue-500 shadow-lg text-white'
-                                            : 'border-blue-300 bg-white hover:border-blue-400 hover:shadow-md text-gray-700'
-                                        }`}
-                                >
-                                    <div className="flex flex-col items-center space-y-1 sm:space-y-2">
-                                        <Shirt className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${deliverySpeed === 'normal' ? 'text-white' : 'text-blue-500'
-                                            } ${deliverySpeed !== 'normal' ? 'animate-bounce' : ''}`} />
-                                        <span className={`font-semibold text-xs sm:text-sm md:text-base ${deliverySpeed === 'normal' ? 'text-white' : 'text-blue-600'
-                                            }`}>
-                                            Normal
-                                        </span>
-                                        <span className={`text-xs sm:text-sm ${deliverySpeed === 'normal' ? 'text-blue-100' : 'text-gray-600'
-                                            }`}>₹{deliveryCharges.normal}</span>
-                                        <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'normal' ? 'text-blue-100' : 'text-gray-500'
-                                            }`}>7 hr slots</span>
-                                    </div>
-                                    {deliverySpeed !== 'normal' && (
-                                        <div className="absolute -top-1 -right-1">
-                                            <div className="w-3 h-3 bg-blue-400 rounded-full animate-ping"></div>
-                                        </div>
-                                    )}
-                                </button>
-
-                                {hoveredSpeed === 'normal' && (
-                                    <div className="hidden sm:block absolute z-10 w-64 p-3 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl left-1/2 transform -translate-x-1/2">
-                                        <div className="flex items-start space-x-2">
-                                            <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.normal.title}</p>
-                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.normal.description}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Express Delivery */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setDeliverySpeed('express')}
-                                    onMouseEnter={() => setHoveredSpeed('express')}
-                                    onMouseLeave={() => setHoveredSpeed(null)}
-                                    className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${deliverySpeed === 'express'
-                                            ? 'border-orange-500 bg-orange-500 shadow-lg text-white'
-                                            : 'border-orange-300 bg-white hover:border-orange-400 hover:shadow-md text-gray-700'
-                                        } ${deliverySpeed !== 'express' ? 'hover:animate-pulse' : ''}`}
-                                >
-                                    <div className="flex flex-col items-center space-y-1 sm:space-y-2">
-                                        <Gauge className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${deliverySpeed === 'express' ? 'text-white' : 'text-orange-500'
-                                            } ${deliverySpeed === 'express' ? 'animate-spin' : ''}`}
-                                            style={{ animationDuration: deliverySpeed === 'express' ? '2s' : 'none' }} />
-                                        <span className={`font-semibold text-xs sm:text-sm md:text-base ${deliverySpeed === 'express' ? 'text-white' : 'text-orange-600'
-                                            }`}>
-                                            Express
-                                        </span>
-                                        <span className={`text-xs sm:text-sm ${deliverySpeed === 'express' ? 'text-orange-100' : 'text-gray-600'
-                                            }`}>₹{deliveryCharges.express}</span>
-                                        <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'express' ? 'text-orange-100' : 'text-gray-500'
-                                            }`}>3 hr</span>
-                                    </div>
-                                    {deliverySpeed === 'express' && (
-                                        <div className="absolute top-2 right-2">
-                                            <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-                                        </div>
-                                    )}
-                                    {deliverySpeed !== 'express' && (
-                                        <div className="absolute -top-1 -right-1">
-                                            <div className="w-3 h-3 bg-orange-400 rounded-full animate-pulse"></div>
-                                        </div>
-                                    )}
-                                </button>
-
-                                {hoveredSpeed === 'Express' && (
-                                    <div className="hidden sm:block absolute z-10 w-64 p-3 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl left-1/2 transform -translate-x-1/2">
-                                        <div className="flex items-start space-x-2">
-                                            <Info className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.express.title}</p>
-                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.express.description}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Lightning Fast */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setDeliverySpeed('lightning')}
-                                    onMouseEnter={() => setHoveredSpeed('lightning')}
-                                    onMouseLeave={() => setHoveredSpeed(null)}
-                                    className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-110 ${deliverySpeed === 'lightning'
-                                            ? 'border-purple-500 bg-gradient-to-br from-purple-500 to-purple-600 shadow-2xl text-white'
-                                            : 'border-purple-300 bg-white hover:border-purple-400 hover:shadow-md text-gray-700'
-                                        } ${deliverySpeed !== 'lightning' ? 'hover:animate-pulse' : ''}`}
-                                >
-                                    <div className="flex flex-col items-center space-y-1 sm:space-y-2">
-                                        <Zap className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${deliverySpeed === 'lightning' ? 'text-yellow-300 animate-bounce' : 'text-purple-500'
-                                            }`} />
-                                        <span className={`font-semibold text-xs sm:text-sm md:text-base ${deliverySpeed === 'lightning' ? 'text-white' : 'text-purple-600'
-                                            }`}>
-                                            Lightning
-                                        </span>
-                                        <span className={`text-xs sm:text-sm ${deliverySpeed === 'lightning' ? 'text-purple-100' : 'text-gray-600'
-                                            }`}>₹{deliveryCharges.lightning}</span>
-                                        <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'lightning' ? 'text-purple-100' : 'text-gray-500'
-                                            }`}>1.5 hr</span>
-                                    </div>
-                                    {deliverySpeed === 'lightning' && (
-                                        <>
-                                            <div className="absolute top-2 right-2">
-                                                <Zap className="w-4 h-4 text-yellow-300 animate-ping" />
-                                            </div>
-                                            <div className="absolute top-2 left-2">
-                                                <div className="w-2 h-2 bg-yellow-300 rounded-full animate-pulse"></div>
-                                            </div>
-                                        </>
-                                    )}
-                                    {deliverySpeed !== 'lightning' && (
-                                        <div className="absolute -top-1 -right-1">
-                                            <Zap className="w-4 h-4 text-purple-400 animate-bounce" />
-                                        </div>
-                                    )}
-                                </button>
-
-                                {hoveredSpeed === 'lightning' && (
-                                    <div className="hidden sm:block absolute z-10 w-64 p-3 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl left-1/2 transform -translate-x-1/2">
-                                        <div className="flex items-start space-x-2">
-                                            <Info className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-semibold text-sm text-gray-800">{speedInfo.lightning.title}</p>
-                                                <p className="text-xs text-gray-600 mt-1">{speedInfo.lightning.description}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                    {/* Delivery Speed Selection */}
+                    {/* Delivery Speed Cards */}
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
@@ -553,7 +400,7 @@ const BookSlot = () => {
                         <motion.div variants={itemVariants}>
                             <Card className="p-6 sm:p-8 border-2 border-primary/10 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl bg-gradient-to-br from-card to-card/95">
                                 <div className="flex items-center mb-6">
-                                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl mr-4">
+                                    <div className="bg-gradient-to-r from-primary to-primary/80 p-3 rounded-xl mr-4">
                                         <Rocket className="w-7 h-7 text-white" />
                                     </div>
                                     <div>
@@ -562,6 +409,90 @@ const BookSlot = () => {
                                     </div>
                                 </div>
 
+                                <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6 md:gap-4">
+                                    {/* Normal Speed */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setDeliverySpeed('normal')}
+                                            onMouseEnter={() => setHoveredSpeed('normal')}
+                                            onMouseLeave={() => setHoveredSpeed(null)}
+                                            className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${deliverySpeed === 'normal'
+                                                    ? 'border-blue-500 bg-blue-500 shadow-lg text-white'
+                                                    : 'border-blue-300 bg-white hover:border-blue-400 hover:shadow-md text-gray-700'
+                                                }`}
+                                        >
+                                            <div className="flex flex-col items-center space-y-1 sm:space-y-2">
+                                                <Shirt className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${deliverySpeed === 'normal' ? 'text-white' : 'text-blue-500'
+                                                    }`} />
+                                                <span className={`font-semibold text-xs sm:text-sm md:text-base ${deliverySpeed === 'normal' ? 'text-white' : 'text-blue-600'
+                                                    }`}>
+                                                    Normal
+                                                </span>
+                                                <span className={`text-xs sm:text-sm ${deliverySpeed === 'normal' ? 'text-blue-100' : 'text-gray-600'
+                                                    }`}>₹{deliveryCharges.normal}</span>
+                                                <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'normal' ? 'text-blue-100' : 'text-gray-500'
+                                                    }`}>7 hr slots</span>
+                                            </div>
+                                            {deliverySpeed !== 'normal' && (
+                                                <div className="absolute -top-1 -right-1">
+                                                    <div className="w-3 h-3 bg-blue-400 rounded-full animate-ping"></div>
+                                                </div>
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {/* Express Delivery */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setDeliverySpeed('express')}
+                                            onMouseEnter={() => setHoveredSpeed('express')}
+                                            onMouseLeave={() => setHoveredSpeed(null)}
+                                            className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-105 ${deliverySpeed === 'express'
+                                                    ? 'border-orange-500 bg-orange-500 shadow-lg text-white'
+                                                    : 'border-orange-300 bg-white hover:border-orange-400 hover:shadow-md text-gray-700'
+                                                }`}
+                                        >
+                                            <div className="flex flex-col items-center space-y-1 sm:space-y-2">
+                                                <Gauge className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${deliverySpeed === 'express' ? 'text-white' : 'text-orange-500'
+                                                    }`} />
+                                                <span className={`font-semibold text-xs sm:text-sm md:text-base ${deliverySpeed === 'express' ? 'text-white' : 'text-orange-600'
+                                                    }`}>
+                                                    Express
+                                                </span>
+                                                <span className={`text-xs sm:text-sm ${deliverySpeed === 'express' ? 'text-orange-100' : 'text-gray-600'
+                                                    }`}>₹{deliveryCharges.express}</span>
+                                                <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'express' ? 'text-orange-100' : 'text-gray-500'
+                                                    }`}>3 hr</span>
+                                            </div>
+                                        </button>
+                                    </div>
+
+                                    {/* Lightning Fast */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setDeliverySpeed('lightning')}
+                                            onMouseEnter={() => setHoveredSpeed('lightning')}
+                                            onMouseLeave={() => setHoveredSpeed(null)}
+                                            className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 transform hover:scale-110 ${deliverySpeed === 'lightning'
+                                                    ? 'border-purple-500 bg-gradient-to-br from-purple-500 to-purple-600 shadow-2xl text-white'
+                                                    : 'border-purple-300 bg-white hover:border-purple-400 hover:shadow-md text-gray-700'
+                                                }`}
+                                        >
+                                            <div className="flex flex-col items-center space-y-1 sm:space-y-2">
+                                                <Zap className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 transition-all duration-300 ${deliverySpeed === 'lightning' ? 'text-yellow-300 animate-bounce' : 'text-purple-500'
+                                                    }`} />
+                                                <span className={`font-semibold text-xs sm:text-sm md:text-base ${deliverySpeed === 'lightning' ? 'text-white' : 'text-purple-600'
+                                                    }`}>
+                                                    Lightning
+                                                </span>
+                                                <span className={`text-xs sm:text-sm ${deliverySpeed === 'lightning' ? 'text-purple-100' : 'text-gray-600'
+                                                    }`}>₹{deliveryCharges.lightning}</span>
+                                                <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'lightning' ? 'text-purple-100' : 'text-gray-500'
+                                                    }`}>1.5 hr</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 {/* Active Speed Info */}
                                 <AnimatePresence>

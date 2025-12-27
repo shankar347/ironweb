@@ -110,7 +110,7 @@ const Sidebar = () => {
                             className={`text-white font-bold transition-all duration-300 text-center ${isOpen ? 'text-2xl' : 'text-sm'
                                 }`}
                         >
-                            {isOpen ? 'Agent Portal' : 'AP'}
+                            {isOpen ? 'Admin Portal' : 'AP'}
                         </h1>
                     </div>
 
