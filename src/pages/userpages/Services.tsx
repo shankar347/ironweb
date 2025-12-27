@@ -138,16 +138,16 @@ const Services = () => {
               <div className="relative z-10">
                 <div className="mb-6 sm:mb-8 text-center">
                   <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 md:space-x-6 mb-4 sm:mb-6 space-y-2 sm:space-y-0">
-                    <span className="text-2xl sm:text-3xl text-slate-400 line-through font-semibold">₹19</span>
+                    <span className="text-2xl sm:text-3xl text-slate-400 line-through font-semibold">₹15</span>
                     <div className={`transition-all duration-500 ${hoveredPrice ? 'scale-110' : 'scale-100'}`}>
-                      <span className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-blue-500 to-sky-500 bg-clip-text text-transparent">₹10</span>
+                      <span className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-blue-500 to-sky-500 bg-clip-text text-transparent">₹12</span>
                     </div>
                     <span className="text-2xl sm:text-3xl text-slate-600">/item</span>
                   </div>
                   <div className="bg-gradient-to-r  
                    rounded-full from-green-500 to-emerald-500 text-white border-none px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base shadow-lg inline-flex items-center">
                     <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                    50% OFF Launch Offer
+                    25% OFF Launch Offer
                   </div>
                 </div>
 
@@ -155,7 +155,7 @@ const Services = () => {
                   {[
                     { label: 'Delivery', price: '₹29', color: 'from-blue-500 to-sky-400' },
                     { label: 'Handling', price: 'Free', color: 'from-sky-400 to-blue-600' },
-                    { label: 'Packing', price: '₹4', color: 'from-blue-600 to-sky-500' }
+                    { label: 'Packing', price: 'Free', color: 'from-blue-600 to-sky-500' }
                   ].map((item, index) => (
                     <div
                       key={index}
@@ -180,8 +180,8 @@ const Services = () => {
 
                 <a href="/customer/book-slot">
                   <Button className="w-full bg-gradient-to-r from-blue-500 via-blue-600 to-sky-500 hover:from-blue-600 hover:via-blue-700 hover:to-sky-600 text-white text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 font-semibold">
-                    <span className="hidden sm:inline">Book Now - Get 65% Off</span>
-                    <span className="sm:hidden">Book Now - 65% Off</span>
+                    <span className="hidden sm:inline">Book Now - Get 25% Off</span>
+                    <span className="sm:hidden">Book Now - 25% Off</span>
                     <Zap className="w-5 h-5 sm:w-6 sm:h-6 ml-2" />
                   </Button>
                 </a>
@@ -303,7 +303,7 @@ const Services = () => {
               Ready to Experience Premium Steaming?
             </h2>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-8 sm:mb-10 text-white/95 max-w-2xl mx-auto px-4">
-              Book your first order now and save 50%!
+              Book your first order now and save 25%!
             </p>
             <a href="/customer/book-slot">
               <Button className="bg-white text-blue-600 hover:bg-blue-50 text-base sm:text-lg md:text-xl px-8 sm:px-10 py-4 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl shadow-2xl hover:shadow-white/20 transition-all duration-500 hover:scale-105 font-bold inline-flex items-center">

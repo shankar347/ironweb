@@ -4,15 +4,13 @@ import {
     MapPin,
     Search,
     ChevronDown,
-    Eye,
-    MoreVertical,
-    Download,
+    ChevronRight,
+    ChevronUp,
     Trash2
 } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
 
 // Mock API URL - replace with your actual API URL
-
 
 // Global gradient variable
 const GRADIENT_CLASS = 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700';
@@ -26,6 +24,13 @@ interface Address {
     pincode?: string;
 }
 
+interface OrderCloth {
+    item: string;
+    cost: string;
+    quantity: string;
+    _id?: string;
+}
+
 interface OrderFlow {
     step: string;
     completed: boolean;
@@ -34,11 +39,13 @@ interface OrderFlow {
 
 interface Order {
     _id: string;
+    orderid?: number;
     userid: string;
     user_name?: string;
     user_phoneno?: string;
     user_address?: Address;
     order_date: string;
+    order_cloths?: OrderCloth[];
     order_totalamount: string;
     order_totalcloths: string;
     order_slot: string;
@@ -56,7 +63,7 @@ interface Order {
 interface Column {
     header: string;
     key: string;
-    render?: (row: Order) => React.ReactNode;
+    render?: (row: Order, expandedRows?: Set<string>, toggleRow?: (id: string) => void) => React.ReactNode;
 }
 
 interface Tab {
@@ -65,11 +72,14 @@ interface Tab {
     count: number;
 }
 
-// Simple DataTable Component with horizontal scroll
-// DataTable component
-const DataTable: React.FC<{ data: Order[]; columns: Column[] }> = ({ data, columns }) => {
+// DataTable component with expandable rows
+const DataTable: React.FC<{ 
+    data: Order[]; 
+    columns: Column[];
+    expandedRows: Set<string>;
+    toggleRow: (id: string) => void;
+}> = ({ data, columns, expandedRows, toggleRow }) => {
     return (
-        // Outer wrapper handles horizontal scroll
         <div className="overflow-x-auto w-full max-w-full rounded-lg shadow-lg">
             <table className="min-w-full table-fixed divide-y divide-gray-200">
                 <thead className={`${GRADIENT_CLASS} text-white`}>
@@ -93,20 +103,74 @@ const DataTable: React.FC<{ data: Order[]; columns: Column[] }> = ({ data, colum
                         </tr>
                     ) : (
                         data.map((row) => (
-                            <tr key={row._id} className="hover:bg-gray-50">
-                                {columns.map((column) => {
-                                    const value = row[column.key as keyof Order];
-                                    return (
-                                        <td key={column.key} className="px-6 py-4 whitespace-nowrap">
-                                            {column.render
-                                                ? column.render(row)
-                                                : typeof value === "string" || typeof value === "number" || typeof value === "boolean"
-                                                    ? value.toString()
-                                                    : null}
+                            <React.Fragment key={row._id}>
+                                <tr className="hover:bg-gray-50">
+                                    {columns.map((column) => {
+                                        const value = row[column.key as keyof Order];
+                                        return (
+                                            <td key={column.key} className="px-6 py-4 whitespace-nowrap">
+                                                {column.render
+                                                    ? column.render(row, expandedRows, toggleRow)
+                                                    : typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+                                                        ? value.toString()
+                                                        : null}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                                {expandedRows.has(row._id) && row.order_cloths && (
+                                    <tr className="bg-blue-50">
+                                        <td colSpan={columns.length} className="px-6 py-4">
+                                            <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                                <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                                                    <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                                                    Order Items ({row.order_totalcloths} items)
+                                                </h4>
+                                                <div className="overflow-x-auto">
+                                                    <table className="min-w-full divide-y divide-gray-200">
+                                                        <thead className="bg-gray-100">
+                                                            <tr>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Item</th>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Quantity</th>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Cost per item</th>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-200">
+                                                            {row.order_cloths.map((cloth, index) => (
+                                                                <tr key={cloth._id || index} className="hover:bg-gray-50">
+                                                                    <td className="px-4 py-3 text-sm font-medium text-gray-800 capitalize">
+                                                                        {cloth.item}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-sm text-gray-700">
+                                                                        {cloth.quantity}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-sm text-gray-700">
+                                                                        ₹{cloth.cost}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-sm font-semibold text-green-600">
+                                                                        ₹{parseInt(cloth.cost) * parseInt(cloth.quantity)}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr className="bg-gray-50">
+                                                                <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-gray-700">
+                                                                    Grand Total:
+                                                                </td>
+                                                                <td className="px-4 py-3 text-sm font-bold text-blue-600">
+                                                                    ₹{row.order_totalamount}
+                                                                </td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
                                         </td>
-                                    );
-                                })}
-                            </tr>
+                                    </tr>
+                                )}
+                            </React.Fragment>
                         ))
                     )}
                 </tbody>
@@ -114,7 +178,6 @@ const DataTable: React.FC<{ data: Order[]; columns: Column[] }> = ({ data, colum
         </div>
     );
 };
-
 
 const DeleteModal: React.FC<{
     isOpen: boolean;
@@ -131,10 +194,10 @@ const DeleteModal: React.FC<{
                     <Trash2 className="text-red-600" size={24} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
-                    Delete User
+                    Delete Order
                 </h3>
                 <p className="text-gray-600 text-center mb-6">
-                    Are you sure you want to delete <span className="font-semibold">{userName.substring(userName.length - 8)}</span>? This action cannot be undone.
+                    Are you sure you want to delete order <span className="font-semibold">{userName.substring(userName.length - 8)}</span>? This action cannot be undone.
                 </p>
                 <div className="flex gap-3">
                     <button
@@ -155,7 +218,6 @@ const DeleteModal: React.FC<{
     );
 };
 
-
 // Main Orders Page Component
 const OrdersPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<string>('all');
@@ -165,42 +227,53 @@ const OrdersPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [allOrders, setallOrders] = useState<Order[]>([]);
     const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
- const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
-    const [orderToDelete, setorderToDelete] = useState<Order | null >(null);
-    // Fetch orders from API
+    const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
+    const [orderToDelete, setorderToDelete] = useState<Order | null>(null);
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-    const handleDeleteClick=(order:Order)=>{
-        setorderToDelete(order)
-        setDeleteModalOpen(true)
-    }
+    const toggleRow = (id: string) => {
+        const newExpandedRows = new Set(expandedRows);
+        if (newExpandedRows.has(id)) {
+            newExpandedRows.delete(id);
+        } else {
+            newExpandedRows.add(id);
+        }
+        setExpandedRows(newExpandedRows);
+    };
 
+    const handleDeleteClick = (order: Order) => {
+        setorderToDelete(order);
+        setDeleteModalOpen(true);
+    };
 
-    const confirmDelete=async()=>{
-        if (!orderToDelete) return
-         try {
-                    const res = await fetch(`${API_URL}/admin/deleteorders/${orderToDelete._id}`, {
-                        method: 'DELETE',
-                        credentials: 'include'
-                    });
-                    const data = await res.json();
-        
-                    if (data?.error) {
-                        console.error(data?.error);
-                        return;
-                    }
-        
-                    // Remove user from state
-                    setallOrders(prev => prev.filter(u => u._id !== orderToDelete._id));
-                    setFilteredOrders(prev => prev.filter(u => u._id !== orderToDelete._id));
-        
-                    console.log('User deleted successfully');
-                } catch (err) {
-                    console.error('Error deleting user:', err);
-                } finally {
-                    setDeleteModalOpen(false);
-                    setorderToDelete(null);
-                }
-    }
+    const confirmDelete = async () => {
+        if (!orderToDelete) return;
+        try {
+            const res = await fetch(`${API_URL}/admin/deleteorders/${orderToDelete._id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            const data = await res.json();
+
+            if (data?.error) {
+                console.error(data?.error);
+                return;
+            }
+
+            // Remove order from state
+            setallOrders(prev => prev.filter(u => u._id !== orderToDelete._id));
+            setFilteredOrders(prev => prev.filter(u => u._id !== orderToDelete._id));
+            expandedRows.delete(orderToDelete._id);
+
+            console.log('Order deleted successfully');
+        } catch (err) {
+            console.error('Error deleting order:', err);
+        } finally {
+            setDeleteModalOpen(false);
+            setorderToDelete(null);
+        }
+    };
+
     useEffect(() => {
         const getallorders = async () => {
             try {
@@ -259,30 +332,34 @@ const OrdersPage: React.FC = () => {
     };
 
     const isToday = (dateString: string): boolean => {
-    const date = new Date(dateString);
-    const today = new Date();
+        const date = new Date(dateString);
+        const today = new Date();
 
-    return (
-        date.getFullYear() === today.getFullYear() &&
-        date.getMonth() === today.getMonth() &&
-        date.getDate() === today.getDate()
-    );
-};
+        return (
+            date.getFullYear() === today.getFullYear() &&
+            date.getMonth() === today.getMonth() &&
+            date.getDate() === today.getDate()
+        );
+    };
 
+    const getProcessingOrders = (): Order[] => {
+        return allOrders.filter(order => {
+            const status = getCurrentStatus(order.order_flow);
+            const isProcessing = status !== 'Completed' && status !== 'Clothes delivered';
+            const isTodayOrder = isToday(order.createdAt || order.order_date);
+            return isProcessing && isTodayOrder;
+        });
+    };
 
-
-const getProcessingOrders = (): Order[] => {
-    return allOrders.filter(order => {
-        const status = getCurrentStatus(order.order_flow);
-
-        const isProcessing =
-            status !== 'Completed' && status !== 'Clothes delivered';
-
-        const isTodayOrder = isToday(order.createdAt);
-
-        return isProcessing && isTodayOrder;
-    });
-};
+    // Get completed orders
+    const getCompletedOrders = (): Order[] => {
+        return allOrders.filter(order => {
+            const status = getCurrentStatus(order.order_flow);
+             const isTodayOrder = isToday(order.createdAt || order.order_date);
+            const statusChecked = status === 'Completed' || status === 'Clothes delivered' ;
+            return isTodayOrder && statusChecked      
+        });
+    };
 
     // Get failed orders
     const getFailedOrders = (): Order[] => {
@@ -296,6 +373,7 @@ const getProcessingOrders = (): Order[] => {
         { id: 'all', label: 'All Orders', count: filteredOrders.length },
         { id: 'today', label: 'Today Orders', count: getTodayOrders().length },
         { id: 'processing', label: 'Processing', count: getProcessingOrders().length },
+        { id: 'completed', label: 'Completed Orders', count: getCompletedOrders().length },
         { id: 'failed', label: 'Failed Orders', count: getFailedOrders().length }
     ];
 
@@ -303,11 +381,31 @@ const getProcessingOrders = (): Order[] => {
     const generateColumns = (): Column[] => {
         const columns: Column[] = [
             {
+                header: 'Order Items',
+                key: 'expand',
+                render: (row: Order, expandedRows?: Set<string>, toggleRow?: (id: string) => void) => (
+                    <button
+                        onClick={() => toggleRow && toggleRow(row._id)}
+                        className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200"
+                        title={expandedRows?.has(row._id) ? "Hide items" : "Show items"}
+                    >
+                        {expandedRows?.has(row._id) ? (
+                            <ChevronUp size={16} className="text-blue-600" />
+                        ) : (
+                            <ChevronRight size={16} className="text-blue-600" />
+                        )}
+                        <span className="text-sm font-medium text-blue-700">
+                            {expandedRows?.has(row._id) ? 'Hide Items' : 'Show Items'}
+                        </span>
+                    </button>
+                )
+            },
+            {
                 header: 'Order ID',
                 key: '_id',
                 render: (row: Order) => (
                     <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                        { row.orderid  || row._id.substring(row._id.length - 8)}
+                        {row.orderid || row._id.substring(row._id.length - 8)}
                     </span>
                 )
             },
@@ -365,13 +463,11 @@ const getProcessingOrders = (): Order[] => {
                     </span>
                 )
             },
-              {
+            {
                 header: 'Delivery Type',
                 key: 'order_deliveryspeed',
                 render: (row: Order) => (
-                    <span className="inline-flex items-center 
-                    px-3 py-1 rounded-full text-md 
-                     font-bold text-blue-800">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-md font-bold text-blue-800">
                         {row.order_deliveryspeed}
                     </span>
                 )
@@ -426,10 +522,13 @@ const getProcessingOrders = (): Order[] => {
                 render: (row: Order) => {
                     const status = getCurrentStatus(row.order_flow);
                     const isCompleted = status === 'Completed' || status === 'Clothes delivered';
+                    const isFailed = status === 'Failed' || status === 'Cancelled';
                     return (
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${isCompleted
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-orange-100 text-orange-800'
+                            : isFailed
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-orange-100 text-orange-800'
                             }`}>
                             {status}
                         </span>
@@ -449,14 +548,14 @@ const getProcessingOrders = (): Order[] => {
                     );
                 }
             },
-              {
+            {
                 header: 'Delete',
                 key: 'actions',
                 render: (row: Order) => (
                     <button
                         onClick={() => handleDeleteClick(row)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                        title="Delete user"
+                        title="Delete order"
                     >
                         <Trash2 size={18} />
                     </button>
@@ -477,6 +576,9 @@ const getProcessingOrders = (): Order[] => {
                 break;
             case 'processing':
                 ordersToDisplay = getProcessingOrders();
+                break;
+            case 'completed':
+                ordersToDisplay = getCompletedOrders();
                 break;
             case 'failed':
                 ordersToDisplay = getFailedOrders();
@@ -532,6 +634,7 @@ const getProcessingOrders = (): Order[] => {
         if (searchTerm.trim() !== '') {
             const searchLower = searchTerm.toLowerCase().trim();
             filtered = filtered.filter(order =>
+                (order.orderid && order.orderid.toString().includes(searchLower)) ||
                 order._id.toLowerCase().includes(searchLower) ||
                 order.order_totalamount.includes(searchLower) ||
                 order.order_totalcloths.includes(searchLower) ||
@@ -567,6 +670,7 @@ const getProcessingOrders = (): Order[] => {
         } else {
             const searchLower = searchTerm.toLowerCase().trim();
             const filtered = allOrders.filter(order =>
+                (order.orderid && order.orderid.toString().includes(searchLower)) ||
                 order._id.toLowerCase().includes(searchLower) ||
                 order.order_totalamount.includes(searchLower) ||
                 order.order_totalcloths.includes(searchLower) ||
@@ -617,13 +721,11 @@ const getProcessingOrders = (): Order[] => {
                 </div>
 
                 {/* Filters */}
-                <div className="p-6 pt-0  max-w-screen-lg">
+                <div className="p-6 pt-0 max-w-screen-lg">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {/* Start Date */}
                         <div className="space-y-2">
-                            <label className="block 
-                            text-sm font-medium
-                            text-gray-700">
+                            <label className="block text-sm font-medium text-gray-700">
                                 Start Date
                             </label>
                             <div className="relative">
@@ -710,8 +812,7 @@ const getProcessingOrders = (): Order[] => {
                 </div>
 
                 {/* Orders Table */}
-                <div className="bg-white 
-                min-w-full max-w-screen-lg rounded-lg shadow-md p-6">
+                <div className="bg-white min-w-full max-w-screen-lg rounded-lg shadow-md p-6">
                     {/* Header */}
                     <div className="mb-4 flex justify-between items-center">
                         <h2 className="text-xl font-semibold text-gray-800">
@@ -725,12 +826,17 @@ const getProcessingOrders = (): Order[] => {
 
                     {/* Table Container — only horizontal scroll */}
                     <div className="overflow-x-auto w-full">
-                        <DataTable data={getDisplayedOrders()} columns={generateColumns()} />
+                        <DataTable 
+                            data={getDisplayedOrders()} 
+                            columns={generateColumns()} 
+                            expandedRows={expandedRows}
+                            toggleRow={toggleRow}
+                        />
                     </div>
                 </div>
-
             </div>
-               <DeleteModal
+
+            <DeleteModal
                 isOpen={deleteModalOpen}
                 onClose={() => {
                     setDeleteModalOpen(false);
@@ -744,7 +850,3 @@ const getProcessingOrders = (): Order[] => {
 };
 
 export default OrdersPage;
-
-
-
-

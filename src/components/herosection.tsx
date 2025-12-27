@@ -152,15 +152,15 @@ const CarouselHeroSection = ({ User }) => {
                        hover:-translate-y-2 hover:shadow-xl"
           >
             <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2">
-              <span className="text-white/60 text-sm sm:text-base line-through">₹19</span>
-              <span className="text-white text-2xl sm:text-4xl font-bold">₹10</span>
+              <span className="text-white/60 text-sm sm:text-base line-through">₹15</span>
+              <span className="text-white text-3xl sm:text-4xl font-bold">₹12</span>
               <span className="text-white/80 text-xs sm:text-lg">/item</span>
             </div>
             <div className="text-xs sm:text-sm text-white/70">
-              + Delivery ₹29 • Handling + Packing ₹4
+              + Delivery charges  
             </div>
             <p className="text-white/70 text-xs sm:text-sm mt-1">
-              Professional packaging included
+           Exclusive launch discounts
             </p>
           </div>
         </div>
@@ -187,7 +187,7 @@ const CarouselHeroSection = ({ User }) => {
              shadow-lg hover:shadow-2xl hover:scale-105
              transition-all duration-300 animate-bounce-slo "
 >
-  Book Now – Get 50% Off
+  Book Now – Get 25% Off
 </Button>
           </Link>
           <Link to="/customer/ordertrack">

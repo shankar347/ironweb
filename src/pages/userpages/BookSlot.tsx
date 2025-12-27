@@ -222,7 +222,8 @@ const BookSlot = () => {
     };
 
     const getTotalAmount = () => {
-        return getItemsSubtotal() + getDeliveryCharge() + 10; // handling charge
+        // Now platform charges are 0, so we don't add 10
+        return getItemsSubtotal() + getDeliveryCharge();
     };
 
     const getAlternativeSpeedOptions = () => {
@@ -940,18 +941,31 @@ const BookSlot = () => {
                                             </span>
                                         )}
                                     </div>
-                                    <div className={isFreeDelivery ? 'line-through text-muted-foreground' : 'font-bold'}>
-                                        ₹{deliveryCharges[deliverySpeed]}
+                                    <div className="flex items-center space-x-2">
+                                        {isFreeDelivery ? (
+                                            <>
+                                                <span className="line-through text-muted-foreground">₹{deliveryCharges[deliverySpeed]}</span>
+                                                <span className="font-bold text-green-600">₹0</span>
+                                            </>
+                                        ) : (
+                                            <span className="font-bold">₹{deliveryCharges[deliverySpeed]}</span>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Handling Charges */}
-                                <div className="flex justify-between p-3 bg-secondary/10 rounded-lg">
+                                {/* Platform Charges */}
+                                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 rounded-lg border border-amber-200/50">
                                     <div className="flex items-center space-x-3">
-                                        <Tag className="w-4 h-4 text-primary" />
-                                        <span>Handling Charges</span>
+                                        <Tag className="w-4 h-4 text-amber-600" />
+                                        <span className="text-foreground">Platform Charges</span>
+                                        <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                                            FREE
+                                        </span>
                                     </div>
-                                    <span className="font-bold">₹10</span>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="line-through text-muted-foreground">₹10</span>
+                                        <span className="font-bold text-green-600">₹0</span>
+                                    </div>
                                 </div>
 
                                 {/* Total */}
@@ -964,18 +978,42 @@ const BookSlot = () => {
                                     <div className="text-2xl font-bold text-primary">₹{getTotalAmount()}</div>
                                 </motion.div>
 
-                                {isFreeDelivery && (
+                                {/* Savings Summary */}
+                                {(isFreeDelivery || getDeliveryCharge() === 0) && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg"
+                                        className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg"
                                     >
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center space-x-2">
-                                                <Star className="w-4 h-4 text-green-600" />
-                                                <span className="font-medium text-green-800">You Saved</span>
+                                        <h4 className="font-bold text-green-800 mb-3 flex items-center">
+                                            <Sparkles className="w-4 h-4 mr-2 text-green-600" />
+                                            You're Saving
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {isFreeDelivery && (
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Truck className="w-4 h-4 text-green-600" />
+                                                        <span className="text-green-700">Delivery Charges</span>
+                                                    </div>
+                                                    <span className="font-bold text-green-700">₹{deliveryCharges[deliverySpeed]}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center space-x-2">
+                                                    <Tag className="w-4 h-4 text-amber-600" />
+                                                    <span className="text-amber-700">Platform Charges</span>
+                                                </div>
+                                                <span className="font-bold text-amber-700">₹10</span>
                                             </div>
-                                            <span className="font-bold text-green-700">₹{deliveryCharges[deliverySpeed]}</span>
+                                            <div className="pt-2 border-t border-green-300">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-green-800">Total Savings</span>
+                                                    <span className="font-bold text-xl text-green-800">
+                                                        ₹{isFreeDelivery ? deliveryCharges[deliverySpeed] + 10 : 10}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </motion.div>
                                 )}
