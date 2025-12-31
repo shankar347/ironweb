@@ -307,21 +307,39 @@ const DataTable: React.FC<{
     );
 };
 
+// Helper function to check if order is completed
+const isOrderCompleted = (orderFlow: OrderFlow[]): boolean => {
+    if (!orderFlow || orderFlow.length === 0) return false;
+    
+    // Check if all steps are completed
+    return orderFlow.every(step => step.completed === true);
+};
+
+// Helper function to get current status
+const getCurrentStatus = (orderFlow: OrderFlow[]): string => {
+    if (!orderFlow || orderFlow.length === 0) return 'Unknown';
+    const currentStep = orderFlow.find(step => !step.completed);
+    return currentStep ? currentStep.step : 'Completed';
+};
+
 // Main Orders Page Component
 const Adminassignoerder: React.FC = () => {
     const [location, setLocation] = useState<string>('All Locations');
     const [searchTerm, setSearchTerm] = useState<string>('');
-    const [allOrders, setallOrders] = useState<Order[]>([]);
+    const [allOrders, setAllOrders] = useState<Order[]>([]);
     const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
     const [allAgents, setAllAgents] = useState<Agent[]>([]);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [showCompleted, setShowCompleted] = useState<boolean>(false); // New state for filter toggle
 
     // Fetch orders from API
     useEffect(() => {
-        const getallorders = async () => {
+        const getAllOrders = async () => {
             try {
+                setIsLoading(true);
                 const res = await fetch(`${API_URL}/admin/alltodayorders`, {
                     credentials: 'include'
                 });
@@ -332,18 +350,25 @@ const Adminassignoerder: React.FC = () => {
                     return;
                 }
 
-                setallOrders(data?.data || []);
-                setFilteredOrders(data?.data || []);
+                // Filter out completed orders by default
+                const incompleteOrders = (data?.data || []).filter((order: Order) => 
+                    !isOrderCompleted(order.order_flow)
+                );
+
+                setAllOrders(data?.data || []);
+                setFilteredOrders(incompleteOrders);
             } catch (err) {
                 console.error('Error fetching orders:', err);
+            } finally {
+                setIsLoading(false);
             }
         };
-        getallorders();
+        getAllOrders();
     }, []);
 
     // Fetch agents from API
     useEffect(() => {
-        const getAllagents = async () => {
+        const getAllAgents = async () => {
             try {
                 const res = await fetch(`${API_URL}/admin/allgents`, {
                     credentials: 'include'
@@ -360,7 +385,7 @@ const Adminassignoerder: React.FC = () => {
                 console.error('Error fetching agents:', err);
             }
         };
-        getAllagents();
+        getAllAgents();
     }, []);
 
     // Handle row selection
@@ -422,8 +447,8 @@ const Adminassignoerder: React.FC = () => {
                 return order;
             });
 
-            setallOrders(updatedOrders);
-            setFilteredOrders(updatedOrders);
+            setAllOrders(updatedOrders);
+            setFilteredOrders(updatedOrders.filter(order => !isOrderCompleted(order.order_flow)));
             setModalOpen(false);
             setSelectedOrder(null);
 
@@ -477,8 +502,8 @@ const Adminassignoerder: React.FC = () => {
                 return order;
             });
 
-            setallOrders(updatedOrders);
-            setFilteredOrders(updatedOrders);
+            setAllOrders(updatedOrders);
+            setFilteredOrders(updatedOrders.filter(order => !isOrderCompleted(order.order_flow)));
             setModalOpen(false);
             setSelectedOrder(null);
             setSelectedRows(new Set());
@@ -505,13 +530,6 @@ const Adminassignoerder: React.FC = () => {
 
     const locations: string[] = getUniqueLocations();
 
-    // Get current status from order flow
-    const getCurrentStatus = (orderFlow: OrderFlow[]): string => {
-        if (!orderFlow || orderFlow.length === 0) return 'Unknown';
-        const currentStep = orderFlow.find(step => !step.completed);
-        return currentStep ? currentStep.step : 'Completed';
-    };
-
     // Handle assign button click
     const handleAssignClick = (order: Order) => {
         setSelectedOrder(order);
@@ -532,7 +550,7 @@ const Adminassignoerder: React.FC = () => {
                 header: 'Order ID',
                 key: '_id',
                 render: (row: Order) => (
-                    <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded whitespace-nowrap">
                         {row.orderid || row._id.substring(row._id.length - 8)}
                     </span>
                 )
@@ -543,97 +561,97 @@ const Adminassignoerder: React.FC = () => {
                 render: (row: Order) => {
                     const date = new Date(row.order_date);
                     return (
-                        <div className="space-y-1">
-                            <div className="font-medium">{date.toLocaleDateString()}</div>
-                            <div className="text-xs text-gray-500">{date.toLocaleTimeString()}</div>
+                        <div className="space-y-1 min-w-[120px]">
+                            <div className="font-medium text-sm">{date.toLocaleDateString()}</div>
+                            <div className="text-xs text-gray-500">{date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </div>
                     );
                 }
             },
             {
-                header: 'Customer Name',
+                header: 'Customer',
                 key: 'user_name',
                 render: (row: Order) => (
-                    <span className="font-medium text-gray-800">
-                        {row.user_name || 'N/A'}
-                    </span>
-                )
-            },
-            {
-                header: 'Customer Phone',
-                key: 'user_phoneno',
-                render: (row: Order) => (
-                    <span className="text-gray-700">
-                        {row.user_phoneno || 'No number'}
-                    </span>
-                )
-            },
-            {
-                header: 'Address',
-                key: 'address',
-                render: (row: Order) => (
-                    <div className="space-y-1 max-w-sm">
-                        <div className="flex items-start gap-2">
-                            <MapPin size={16} className="text-gray-400 mt-1 flex-shrink-0" />
-                            <div className="text-sm text-gray-700">
-                                <div>{row.user_address?.houseno}, {row.user_address?.streetname}</div>
-                                <div>{row.user_address?.area}, {row.user_address?.city}</div>
-                                <div className="text-gray-500">PIN: {row.user_address?.pincode}</div>
-                            </div>
-                        </div>
+                    <div className="space-y-1 min-w-[120px]">
+                        <span className="font-medium text-gray-800 text-sm block">
+                            {row.user_name || 'N/A'}
+                        </span>
+                        <span className="text-xs text-gray-600 block">
+                            {row.user_phoneno || 'No number'}
+                        </span>
                     </div>
                 )
             },
+         {
+    header: 'Address',
+    key: 'address',
+    render: (row: Order) => (
+        <div className="max-w-[180px] min-w-[150px]">
+            <div className="flex items-start gap-2">
+                <MapPin size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-gray-700 min-w-0 flex-1">
+                    <div className="break-words whitespace-normal overflow-visible leading-tight">
+                        {row.user_address?.houseno}, {row.user_address?.streetname}
+                    </div>
+                    <div className="whitespace-normal overflow-visible leading-tight mt-0.5">
+                        {row.user_address?.area}, {row.user_address?.city}
+                    </div>
+                    <div className="text-gray-500 mt-0.5">PIN: {row.user_address?.pincode}</div>
+                </div>
+            </div>
+        </div>
+    )
+},
             {
                 header: 'Slot',
                 key: 'order_slot',
                 render: (row: Order) => (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
                         {row.order_slot}
                     </span>
                 )
             },
             {
-                header: 'Delivery Type',
+                header: 'Delivery',
                 key: 'order_deliveryspeed',
                 render: (row: Order) => (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-md font-bold text-blue-800">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold text-blue-800 whitespace-nowrap">
                         {row.order_deliveryspeed}
                     </span>
                 )
             },
             {
-                header: 'Total Clothes',
+                header: 'Clothes',
                 key: 'order_totalcloths',
                 render: (row: Order) => (
-                    <span className="font-semibold text-gray-800">{row.order_totalcloths} items</span>
+                    <span className="font-semibold text-gray-800 text-sm whitespace-nowrap">{row.order_totalcloths} items</span>
                 )
             },
             {
-                header: 'Total Amount',
+                header: 'Amount',
                 key: 'order_totalamount',
                 render: (row: Order) => (
-                    <span className="font-bold text-green-600 text-base">₹{row.order_totalamount}</span>
+                    <span className="font-bold text-green-600 text-sm whitespace-nowrap">₹{row.order_totalamount}</span>
                 )
             },
             {
-                header: 'Payment Type',
+                header: 'Payment',
                 key: 'order_paymenttype',
                 render: (row: Order) => (
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${row.order_paymenttype === 'online payment'
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${row.order_paymenttype === 'online payment'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        } whitespace-nowrap`}>
                         {row.order_paymenttype === 'online payment' ? '💳 Online' : '💵 COD'}
                     </span>
                 )
             },
             {
-                header: 'Assigned Agent',
+                header: 'Agent',
                 key: 'agent_name',
                 render: (row: Order) => (
-                    <div className="space-y-1">
-                        <div className="font-medium text-gray-800">
+                    <div className="space-y-1 min-w-[120px]">
+                        <div className="font-medium text-gray-800 text-sm">
                             {row.agent_name || 'Not Assigned'}
                         </div>
                         {row.agent_phoneno && (
@@ -647,26 +665,26 @@ const Adminassignoerder: React.FC = () => {
                 key: 'status',
                 render: (row: Order) => {
                     const status = getCurrentStatus(row.order_flow);
-                    const isCompleted = status === 'Completed' || status === 'Clothes delivered';
+                    const isCompleted = isOrderCompleted(row.order_flow);
                     return (
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${isCompleted
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${isCompleted
                             ? 'bg-green-100 text-green-800'
                             : 'bg-orange-100 text-orange-800'
-                            }`}>
+                            } whitespace-nowrap`}>
                             {status}
                         </span>
                     );
                 }
             },
             {
-                header: 'Assign Agent',
+                header: 'Action',
                 key: 'assign',
                 render: (row: Order) => (
                     <button
                         onClick={() => handleAssignClick(row)}
-                        className={`px-4 py-2 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center gap-2`}
+                        className={`px-3 py-1.5 ${GRADIENT_CLASS} text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center gap-1 whitespace-nowrap`}
                     >
-                        <UserPlus size={16} />
+                        <UserPlus size={14} />
                         {row.agent_name ? 'Reassign' : 'Assign'}
                     </button>
                 )
@@ -679,6 +697,11 @@ const Adminassignoerder: React.FC = () => {
     // Apply filters function
     const applyFilters = () => {
         let filtered: Order[] = [...allOrders];
+
+        // Filter by completion status
+        if (!showCompleted) {
+            filtered = filtered.filter(order => !isOrderCompleted(order.order_flow));
+        }
 
         // Location filter based on area
         if (location && location !== 'All Locations') {
@@ -696,7 +719,7 @@ const Adminassignoerder: React.FC = () => {
                 order.order_totalcloths.includes(searchLower) ||
                 order.order_paymenttype.toLowerCase().includes(searchLower) ||
                 order.order_slot.toLowerCase().includes(searchLower) ||
-                (order.orderid && order.orderid.toLowerCase().includes(searchLower)) ||
+                (order.orderid && order.orderid.toString().includes(searchLower)) ||
                 (order.user_name && order.user_name.toLowerCase().includes(searchLower)) ||
                 (order.user_phoneno && order.user_phoneno.includes(searchLower)) ||
                 (order.agent_name && order.agent_name.toLowerCase().includes(searchLower)) ||
@@ -713,23 +736,49 @@ const Adminassignoerder: React.FC = () => {
     const clearFilters = () => {
         setLocation('All Locations');
         setSearchTerm('');
-        setFilteredOrders(allOrders);
         setSelectedRows(new Set());
+        
+        // Reset to show only incomplete orders
+        const incompleteOrders = allOrders.filter(order => !isOrderCompleted(order.order_flow));
+        setFilteredOrders(incompleteOrders);
+        setShowCompleted(false);
+    };
+
+    // Toggle completed orders visibility
+    const toggleCompletedOrders = () => {
+        const newShowCompleted = !showCompleted;
+        setShowCompleted(newShowCompleted);
+        
+        if (newShowCompleted) {
+            // Show all orders
+            setFilteredOrders(allOrders);
+        } else {
+            // Show only incomplete orders
+            const incompleteOrders = allOrders.filter(order => !isOrderCompleted(order.order_flow));
+            setFilteredOrders(incompleteOrders);
+        }
     };
 
     // Real-time search as user types
     useEffect(() => {
         if (searchTerm.trim() === '') {
-            setFilteredOrders(allOrders);
+            if (showCompleted) {
+                setFilteredOrders(allOrders);
+            } else {
+                const incompleteOrders = allOrders.filter(order => !isOrderCompleted(order.order_flow));
+                setFilteredOrders(incompleteOrders);
+            }
         } else {
             const searchLower = searchTerm.toLowerCase().trim();
-            const filtered = allOrders.filter(order =>
+            let filtered = showCompleted ? [...allOrders] : allOrders.filter(order => !isOrderCompleted(order.order_flow));
+            
+            filtered = filtered.filter(order =>
                 order._id.toLowerCase().includes(searchLower) ||
                 order.order_totalamount.includes(searchLower) ||
                 order.order_totalcloths.includes(searchLower) ||
                 order.order_paymenttype.toLowerCase().includes(searchLower) ||
                 order.order_slot.toLowerCase().includes(searchLower) ||
-                (order.orderid && order.orderid.toLowerCase().includes(searchLower)) ||
+                (order.orderid && order.orderid.toString().includes(searchLower)) ||
                 (order.user_name && order.user_name.toLowerCase().includes(searchLower)) ||
                 (order.user_phoneno && order.user_phoneno.includes(searchLower)) ||
                 (order.agent_name && order.agent_name.toLowerCase().includes(searchLower)) ||
@@ -737,24 +786,25 @@ const Adminassignoerder: React.FC = () => {
                 (order.user_address?.area && order.user_address.area.toLowerCase().includes(searchLower)) ||
                 getCurrentStatus(order.order_flow).toLowerCase().includes(searchLower)
             );
+            
             setFilteredOrders(filtered);
         }
-    }, [searchTerm, allOrders]);
+    }, [searchTerm, allOrders, showCompleted]);
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
             <div className="max-w-full mx-auto space-y-6">
                 {/* Header */}
                 <div className="rounded-lg p-6">
-                    <h1 className={`text-3xl font-bold ${GRADIENT_CLASS} bg-clip-text text-transparent mb-2`}>
+                    <h1 className={`text-2xl md:text-3xl font-bold ${GRADIENT_CLASS} bg-clip-text text-transparent mb-2`}>
                         Assign Orders
                     </h1>
                     <p className="text-gray-600">Select the agent to assign orders</p>
                 </div>
 
                 {/* Filters */}
-                <div className="p-6 pt-0 max-w-screen-lg">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 md:p-6 pt-0 max-w-screen-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {/* Location Filter */}
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
@@ -765,7 +815,7 @@ const Adminassignoerder: React.FC = () => {
                                 <select
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
-                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm"
                                 >
                                     {locations.map((loc) => (
                                         <option key={loc} value={loc}>
@@ -789,22 +839,42 @@ const Adminassignoerder: React.FC = () => {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Search orders..."
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Show Completed Toggle */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Show Completed Orders
+                            </label>
+                            <div className="flex items-center">
+                                <button
+                                    onClick={toggleCompletedOrders}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showCompleted ? 'bg-green-500' : 'bg-gray-300'}`}
+                                >
+                                    <span
+                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showCompleted ? 'translate-x-6' : 'translate-x-1'}`}
+                                    />
+                                </button>
+                                <span className="ml-3 text-sm text-gray-700">
+                                    {showCompleted ? 'Showing All' : 'Showing Incomplete Only'}
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-4 flex gap-3">
+                    <div className="mt-4 flex gap-3 flex-wrap">
                         <button
                             onClick={applyFilters}
-                            className={`px-6 py-2 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105`}
+                            className={`px-4 py-2 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 text-sm`}
                         >
                             Apply Filters
                         </button>
                         <button
                             onClick={clearFilters}
-                            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-all duration-200"
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-all duration-200 text-sm"
                         >
                             Clear Filters
                         </button>
@@ -814,17 +884,17 @@ const Adminassignoerder: React.FC = () => {
                 {/* Assign Selected Button - Shows when rows are selected */}
                 {selectedRows.size > 0 && (
                     <div className="bg-white rounded-lg shadow-md p-4 max-w-screen-lg">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
                             <div className="flex items-center gap-3">
-                                <span className="text-gray-700 font-medium">
+                                <span className="text-gray-700 font-medium text-sm">
                                     {selectedRows.size} order{selectedRows.size > 1 ? 's' : ''} selected
                                 </span>
                             </div>
                             <button
                                 onClick={handleAssignSelectedClick}
-                                className={`px-6 py-2 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center gap-2`}
+                                className={`px-4 py-2 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center gap-2 text-sm`}
                             >
-                                <UserPlus size={18} />
+                                <UserPlus size={16} />
                                 Assign Agent to Selected
                             </button>
                         </div>
@@ -832,23 +902,37 @@ const Adminassignoerder: React.FC = () => {
                 )}
 
                 {/* Orders Table */}
-                <div className="bg-white min-w-full max-w-screen-lg rounded-lg shadow-md p-6">
-                    <div className="mb-4 flex justify-between items-center">
-                        <h2 className="text-xl font-semibold text-gray-800">
+                <div className="bg-white min-w-full max-w-screen-lg rounded-lg shadow-md p-4 md:p-6">
+                    <div className="mb-4 flex justify-between items-center flex-wrap gap-3">
+                        <h2 className="text-lg md:text-xl font-semibold text-gray-800">
                             Today Orders
                         </h2>
-                        <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                            Total: <span className="font-bold text-blue-600">{filteredOrders.length}</span> orders
-                        </span>
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                                Total: <span className="font-bold text-blue-600">{filteredOrders.length}</span> orders
+                            </span>
+                            {isLoading && (
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                            )}
+                        </div>
                     </div>
 
-                    <DataTable 
-                        data={filteredOrders} 
-                        columns={generateColumns()} 
-                        selectedRows={selectedRows}
-                        onRowSelect={handleRowSelect}
-                        onSelectAll={handleSelectAll}
-                    />
+                    {isLoading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading orders...</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <DataTable 
+                                data={filteredOrders} 
+                                columns={generateColumns()} 
+                                selectedRows={selectedRows}
+                                onRowSelect={handleRowSelect}
+                                onSelectAll={handleSelectAll}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -28,6 +28,15 @@ const Contact = () => {
     message: ''
   });
 
+  // Contact information constants - single source of truth
+  const CONTACT_INFO = {
+    phone: '+91 6383148182',
+    phoneRaw: '6383148182', // Without +91 for WhatsApp
+    email: 'steemerservicescontactin@gmail.com',
+    whatsapp: 'https://wa.me/916383148182', // WhatsApp link with country code
+    serviceHours: '6 Am - 7 PM'
+  };
+
   useEffect(() => {
     setIsVisible(true);
   }, []);
@@ -37,17 +46,19 @@ const Contact = () => {
       icon: Phone,
       title: 'Phone Support',
       subtitle: 'Call us anytime',
-      action: '+91  6383148182',
+      action: CONTACT_INFO.phone,
       color: 'from-blue-500 to-sky-400',
-      delay: 0
+      delay: 0,
+      onClick: () => window.open(`tel:${CONTACT_INFO.phone}`, '_blank')
     },
     {
       icon: Mail,
       title: 'Email Support',
       subtitle: '24/7 response',
-      action: 'steemerservicescontactin@gmail.com',
+      action: CONTACT_INFO.email,
       color: 'from-purple-500 to-pink-400',
-      delay: 200
+      delay: 200,
+      onClick: () => window.open(`mailto:${CONTACT_INFO.email}`, '_blank')
     },
     {
       icon: MessageCircle,
@@ -56,30 +67,32 @@ const Contact = () => {
       action: 'Chat Now',
       color: 'from-green-500 to-emerald-500',
       delay: 400,
-      isButton: true
+      isButton: true,
+      onClick: () => window.open(CONTACT_INFO.whatsapp, '_blank')
     },
     {
       icon: Clock,
       title: 'Service Hours',
       subtitle: 'Daily service',
-      action: '8 AM - 8 PM',
+      action: CONTACT_INFO.serviceHours,
       color: 'from-orange-500 to-amber-400',
-      delay: 600
+      delay: 600,
+      onClick: null
     }
   ];
 
   const serviceAreas = [
-  "east tambaram",
-  "west tambaram",
-  "krishna nagar",
-  "new perungalathur",
-  "old perungalathur"
-];
+    "East Tambaram",
+    "West Tambaram",
+    "Krishna Nagar",
+    "New Perungalathur",
+    "Old Perungalathur"
+  ];
 
   const faqs = [
     {
       question: 'What are your pickup hours?',
-      answer: 'We offer pickup and delivery from 8 AM to 8 PM daily.'
+      answer: `We offer pickup and delivery from ${CONTACT_INFO.serviceHours} daily.`
     },
     {
       question: 'How long does it take?',
@@ -87,7 +100,7 @@ const Contact = () => {
     },
     {
       question: 'What areas do you cover?',
-      answer: 'Currently serving West Tambaram and nearby areas.'
+      answer: `Currently serving: ${serviceAreas.join(', ')} and nearby areas.`
     }
   ];
 
@@ -114,13 +127,14 @@ const Contact = () => {
     const data = await res.json()
 
     if (data?.error) {
+      setIsLoading(false);
       return toast.error(data?.error)
     }
 
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      toast.success(data?.message);
+      toast.success(data?.message || 'Message sent successfully!');
       setFormData({
         name: '',
         email: '',
@@ -131,10 +145,8 @@ const Contact = () => {
     }, 2000);
   };
 
-
   return (
-    <div className="min-h-screen bg-gradient-to-br
-     from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Hero Section */}
       <section className="relative py-16 sm:py-20 md:py-24 
       bg-gradient-to-br
@@ -149,8 +161,7 @@ from-blue-400 via-blue-700 to-sky-500
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className={`text-center mb-12 sm:mb-16 transition-all duration-1000 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <h1 className="text-4xl sm:text-5xl  text-white
-            md:text-6xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 bg-clip-text text-transparent mb-4 sm:mb-6 px-2">
+            <h1 className="text-4xl sm:text-5xl text-white md:text-6xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 bg-clip-text text-transparent mb-4 sm:mb-6 px-2">
               Get in Touch
             </h1>
             <p className="text-lg sm:text-xl text-white text-slate-600 max-w-2xl mx-auto px-4">
@@ -180,15 +191,7 @@ from-blue-400 via-blue-700 to-sky-500
                   className={`relative group cursor-pointer transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
                   style={{ transitionDelay: `${method.delay}ms` }}
                   onMouseEnter={() => setActiveCard(index)}
-                  onClick={() => {
-                    if (method.title === 'WhatsApp') {
-                      window.open('https://wa.me/6383148182', '_blank');
-                    } else if (method.title === 'Phone Support') {
-                      window.open('tel:+919876543210');
-                    } else if (method.title === 'Email Support') {
-                      window.location.href = 'mailto:support@steamer.com';
-                    }
-                  }}
+                  onClick={method.onClick || undefined}
                 >
                   {/* Connecting Line for Desktop */}
                   {index < 3 && (
@@ -283,7 +286,7 @@ from-blue-400 via-blue-700 to-sky-500
                         id="phone"
                         name="phone"
                         type="tel"
-                        placeholder="+91 98765 43210"
+                        placeholder={CONTACT_INFO.phone}
                         value={formData.phone}
                         onChange={handleInputChange}
                         className="border-2 border-slate-200 focus:border-blue-500 rounded-lg transition-all duration-300 p-2 sm:p-3"
@@ -299,7 +302,7 @@ from-blue-400 via-blue-700 to-sky-500
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="your.email@example.com"
+                      placeholder={CONTACT_INFO.email}
                       value={formData.email}
                       onChange={handleInputChange}
                       className="border-2 border-slate-200 focus:border-blue-500 rounded-lg transition-all duration-300 p-2 sm:p-3"
@@ -418,7 +421,7 @@ from-blue-400 via-blue-700 to-sky-500
                       <Button
                         variant="outline"
                         className="w-full justify-start border-2 border-slate-200 hover:border-green-400 hover:bg-green-50 rounded-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 py-2 sm:py-3 text-sm sm:text-base"
-                        onClick={() => window.open('https://wa.me/919876543210', '_blank')}
+                        onClick={() => window.open(CONTACT_INFO.whatsapp, '_blank')}
                       >
                         <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600" />
                         WhatsApp Support
@@ -426,10 +429,10 @@ from-blue-400 via-blue-700 to-sky-500
                       <Button
                         variant="outline"
                         className="w-full justify-start border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50 rounded-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 py-2 sm:py-3 text-sm sm:text-base"
-                        onClick={() => window.open('tel:+919876543210')}
+                        onClick={() => window.open(`tel:${CONTACT_INFO.phone}`)}
                       >
                         <Phone className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-                        Call Support
+                        Call Support: {CONTACT_INFO.phone}
                       </Button>
                     </div>
                   </div>

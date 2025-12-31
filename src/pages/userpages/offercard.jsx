@@ -40,7 +40,7 @@ export default function OfferCard() {
                     </h3>
 
                     <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                        Select more than <strong className="text-blue-600 font-bold mr-5">10 clothes</strong>  
+                        Select more than <strong className="text-blue-600 font-bold mr-5">15 clothes</strong>  
                        <span className="ml-2">with </span>  <strong className="text-green-600">Normal Speed</strong> to get  
                         <span className="font-extrabold text-purple-600"> FREE Delivery 🚚✨</span>
                     </p>

@@ -225,7 +225,7 @@ const CarouselHeroSection = ({ User }) => {
         {/* Service Hours */}
         <div className="flex items-center justify-center space-x-2 text-white/80 text-xs sm:text-sm">
           <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>Service Hours: 8 AM - 8 PM Daily</span>
+          <span>Service Hours: 6 Am - 7 PM Daily</span>
         </div>
       </div>
 

@@ -102,7 +102,7 @@ const About = () => {
     {
       icon: Phone,
       title: 'Customer Support',
-      subtitle: 'Available 8 AM - 8 PM Daily',
+      subtitle: 'Available 6 Am - 7 PM Daily',
       action: '+91  6383148182',
       color: 'from-blue-500 to-sky-400'
     },

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Upload, Image, Video, CheckCircle, AlertCircle, X, Edit2, Trash2, Shirt, ShirtIcon } from 'lucide-react';
+import { Upload, Image, Video, CheckCircle, AlertCircle, X, Edit2, Trash2, Shirt, ShirtIcon, ToggleLeft, ToggleRight } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
 import { toast } from 'react-toastify';
 
@@ -25,135 +25,183 @@ const UploadClientAssets = () => {
   const [editingBanner, setEditingBanner] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   
-  const [Itemlist,setItemlist]=useState([])
-  const [name,setname]=useState('')
-  const [price,setprice]=useState('')
-  const [isItemuploading,setisitemuploading]=useState(false)
-  const [isItemedit,setIsitemEdit]=useState(false)
-  const [selectedItem,setSelectedItem]=useState(null)
+  const [Itemlist, setItemlist] = useState([]);
+  const [name, setname] = useState('');
+  const [price, setprice] = useState('');
+  const [isItemuploading, setisitemuploading] = useState(false);
+  const [isItemedit, setIsitemEdit] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  const getbookItems=async()=>{
-   try {
+  // Booking status states
+  const [bookingStatus, setBookingStatus] = useState({
+    status: true,
+    lastUpdated: null,
+    updatedBy: 'admin'
+  });
+  const [isToggling, setIsToggling] = useState(false);
+
+  // Fetch booking status using the provided endpoint
+  const getBookingStatus = async () => {
+    try {
+      const res = await fetch(`${API_URL}/admin/getbookstatus`, {
+        credentials: 'include',
+      });
+      const data = await res.json();
+      
+      if (data?.success) {
+        setBookingStatus({
+          status: data.status,
+          lastUpdated: data.lastUpdated,
+          updatedBy: data.updatedBy
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching booking status:", err);
+      // Set default if API fails
+      setBookingStatus({
+        status: true,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: 'system'
+      });
+    }
+  };
+
+  // Toggle booking status
+  const toggleBookingStatus = async () => {
+    setIsToggling(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/updatebookstatus`, {
+        method: 'PUT',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Update local state with new status
+        setBookingStatus({
+          status: data.data.isOpen,
+          lastUpdated: data.data.lastUpdated,
+          updatedBy: data.data.updatedBy || 'admin'
+        });
+        toast.success(data.message);
+      } else {
+        toast.error(data.message || "Failed to toggle booking status");
+      }
+    } catch (err) {
+      toast.error("Error toggling booking status");
+      console.error("Toggle error:", err);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  // Fetch book items
+  const getbookItems = async () => {
+    try {
       const res = await fetch(`${API_URL}/admin/getbookitems`, {
         credentials: 'include', 
       });
       const data = await res.json();
       
-      if (data?.data)
-      {
-        setItemlist(data?.data)
+      if (data?.data) {
+        setItemlist(data?.data);
       }
     } catch (err) {
       toast.error("Error in fetching book items");
     }   
-  }
+  };
 
+  const handleItemedit = (item) => {
+    setSelectedItem(item);
+    setIsitemEdit(true);
+    setname(item.name);
+    setprice(item.price);
+  };
 
-  const handleItemedit=(item)=>{
-    setSelectedItem(item)
-    setIsitemEdit(true)
-    setname(item.name)
-    setprice(item.price)
-  }
+  const cancelItemedit = () => {
+    setSelectedItem(null);
+    setIsitemEdit(false);
+    setname('');
+    setprice('');
+  };
 
-  const cancelItemedit=()=>{
-    setSelectedItem(null)
-    setIsitemEdit(false)
-    setname('')
-    setprice('')
-  }
-
-
-  
-  const editbookItems=async()=>{
-   try {
-    setisitemuploading(true)
+  const editbookItems = async () => {
+    try {
+      setisitemuploading(true);
       const res = await fetch(`${API_URL}/admin/editbookitems/${selectedItem?._id}`, {
         credentials: 'include',
-        method:'PUT',
-        headers:{
-          'content-type':'application/json'
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json'
         },
-        body:JSON.stringify({
+        body: JSON.stringify({
           name,
           price
         })
       });
       const data = await res.json();
      
-      if (data?.message)
-      {
-        setSelectedItem(null)
-        getbookItems()
-        setname('')
-        setprice('')
-        setIsitemEdit(false)
-        toast.success(data?.message)
-        setisitemuploading(false)
+      if (data?.message) {
+        setSelectedItem(null);
+        getbookItems();
+        setname('');
+        setprice('');
+        setIsitemEdit(false);
+        toast.success(data?.message);
       }
-
     } catch (err) {
-      toast.error("Error in fetching banners");
+      toast.error("Error in editing book items");
+    } finally {
+      setisitemuploading(false);
     }
-  }
+  };
 
-
-  const createbookItems=async()=>{
-   try {
-    setisitemuploading(true)
+  const createbookItems = async () => {
+    try {
+      setisitemuploading(true);
       const res = await fetch(`${API_URL}/admin/createbookitems`, {
         credentials: 'include',
-        method:'POST',
-        headers:{
-          'content-type':'application/json'
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json'
         },
-        body:JSON.stringify({
+        body: JSON.stringify({
           name,
           price
         })
       });
       const data = await res.json();
      
-      if (data?.message)
-      {
-        getbookItems()
-        setname('')
-        setprice('')
-        toast.success(data?.message)
-        setisitemuploading(false)
+      if (data?.message) {
+        getbookItems();
+        setname('');
+        setprice('');
+        toast.success(data?.message);
       }
-
     } catch (err) {
-      toast.error("Error in fetching banners");
+      toast.error("Error in creating book items");
+    } finally {
+      setisitemuploading(false);
     }
-  }
+  };
 
-
-  const deletebookItems=async(item)=>{
-   try {
+  const deletebookItems = async (item) => {
+    try {
       const res = await fetch(`${API_URL}/admin/deletebookitems/${item?._id}`, {
         credentials: 'include',
-        method:'DELETE',
+        method: 'DELETE',
       });
       const data = await res.json();
      
-      if (data?.message)
-      {
-        setSelectedItem(null)
-        getbookItems()
-        toast.success(data?.message)
+      if (data?.message) {
+        setSelectedItem(null);
+        getbookItems();
+        toast.success(data?.message);
       }
-
     } catch (err) {
-      toast.error("Error in fetching banners");
+      toast.error("Error in deleting book items");
     }
-  }
-
-  useEffect(()=>{
-
-    getbookItems()
-
-  },[])
+  };
 
   // Handle banner image selection
   const handleBannerChange = (e) => {
@@ -271,8 +319,6 @@ const UploadClientAssets = () => {
 
   // Update banner
   const updateBannerData = async () => {
-    
-
     setImageUploading(true);
     setImageUploadStatus('');
 
@@ -290,7 +336,6 @@ const UploadClientAssets = () => {
         credentials: 'include'
       });
 
-      
       if (response.ok) {
         setImageUploadStatus('success');
         toast.success('Banner updated successfully!');
@@ -383,7 +428,22 @@ const UploadClientAssets = () => {
 
   useEffect(() => {
     getBanners();
+    getbookItems();
+    getBookingStatus();
   }, []);
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -396,6 +456,80 @@ const UploadClientAssets = () => {
           <p className="text-gray-600">Upload banner images and homepage videos</p>
         </div>
 
+        {/* Booking Status Toggle Section */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              {bookingStatus.status ? (
+                <ToggleRight className="text-green-600" size={24} />
+              ) : (
+                <ToggleLeft className="text-red-600" size={24} />
+              )}
+              <h2 className="text-xl font-semibold text-gray-800">Booking Slots Status</h2>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              bookingStatus.status 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {bookingStatus.status ? 'OPEN' : 'CLOSED'}
+            </span>
+          </div>
+          
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              {bookingStatus.status 
+                ? "Booking slots are currently OPEN. Users can book appointments."
+                : "Booking slots are currently CLOSED. Users cannot book appointments."}
+            </p>
+            
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p className="font-medium text-gray-700">Toggle Booking Status</p>
+                <p className="text-sm text-gray-500">
+                  Switch to {bookingStatus.status ? 'close' : 'open'} booking slots
+                </p>
+              </div>
+              
+              <div className="flex items-center">
+                <button
+                  onClick={toggleBookingStatus}
+                  disabled={isToggling}
+                  className="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Toggle booking status</span>
+                  <span className={`inline-block w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
+                    bookingStatus.status ? 'bg-green-500' : 'bg-red-500'
+                  }`} />
+                  <span className={`absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full transition-transform duration-300 ease-in-out transform ${
+                    bookingStatus.status ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+                
+                <span className="ml-3 text-sm font-medium text-gray-700">
+                  {isToggling ? (
+                    <span className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      Updating...
+                    </span>
+                  ) : bookingStatus.status ? 'Open' : 'Closed'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="text-sm text-gray-500 border-t pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <p className="font-medium text-gray-600">Last updated:</p>
+                  <p>{formatDate(bookingStatus.lastUpdated)}</p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Rest of the component remains the same */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Banner Upload/Edit Section */}
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -409,7 +543,7 @@ const UploadClientAssets = () => {
               {isEditMode && (
                 <button
                   onClick={cancelEdit}
-                  className="text-red-500  hover:text-gray-700 text-sm"
+                  className="text-red-500 hover:text-gray-700 text-sm"
                 >
                   Cancel
                 </button>
@@ -419,8 +553,7 @@ const UploadClientAssets = () => {
             <div className="space-y-4">
               {/* Header Input */}
               <div className="space-y-2">
-                <label 
-                className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700">
                   Header Text
                 </label>
                 <input
@@ -651,15 +784,17 @@ const UploadClientAssets = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1   lg:grid-cols-2 gap-6">
-         <div className="bg-white rounded-lg  mt-10 shadow-md p-6">
+        {/* Book Items Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <ShirtIcon className="text-blue-600" size={24} />
                 <h2 className="text-xl font-semibold text-gray-800"> 
-                  { !isItemedit ? 'Upload Book items' : 'Edit Book items' } </h2>
-           </div>
-            {isItemedit && (
+                  {!isItemedit ? 'Upload Book items' : 'Edit Book items'} 
+                </h2>
+              </div>
+              {isItemedit && (
                 <button
                   onClick={cancelItemedit}
                   className="text-red-500 hover:text-gray-700 text-sm"
@@ -667,14 +802,13 @@ const UploadClientAssets = () => {
                   Cancel
                 </button>
               )}
-           </div>
+            </div>
             <div className="space-y-8">
               <div className='space-y-2'>
-                <label htmlFor=""
-                className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700">
                   Item Name
                 </label>
-<input
+                <input
                   type="text"
                   value={name}
                   onChange={(e) => setname(e.target.value)}
@@ -682,39 +816,38 @@ const UploadClientAssets = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-                 <div className='space-y-2'>
-                <label htmlFor=""
-                className="block text-sm font-medium text-gray-700">
+              <div className='space-y-2'>
+                <label className="block text-sm font-medium text-gray-700">
                   Item price
                 </label>
-<input
+                <input
                   type="text"
                   value={price}
                   onChange={(e) => setprice(e.target.value)}
-                  placeholder="Enter Book item price ex: 25 or 40  "
+                  placeholder="Enter Book item price ex: 25 or 40"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
-                    <button
-                onClick={isItemedit ? editbookItems : createbookItems}
-                disabled={isItemuploading}
-                className={`w-full px-6 py-3 mt-12 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
-              >
-                {isItemuploading ? 'Processing...' : (isItemedit ? 'Update Book Item' : 'Upload Book Item')}
-              </button>
+            <button
+              onClick={isItemedit ? editbookItems : createbookItems}
+              disabled={isItemuploading}
+              className={`w-full px-6 py-3 mt-12 ${GRADIENT_CLASS} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
+            >
+              {isItemuploading ? 'Processing...' : (isItemedit ? 'Update Book Item' : 'Upload Book Item')}
+            </button>
           </div>    
-             <div className="bg-white rounded-lg mt-10 shadow-md p-6">
+          
+          <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center gap-3 mb-6">
               <ShirtIcon className="text-green-600" size={24} />
-              <h2 className="text-xl font-semibold text-gray-800">Existing 
-                Book Items</h2>
+              <h2 className="text-xl font-semibold text-gray-800">Existing Book Items</h2>
             </div>
-              <div className="space-y-4 max-h-[350px] overflow-y-auto">
+            <div className="space-y-4 max-h-[350px] overflow-y-auto">
               {Itemlist.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No Book Items found</p>
               ) : (
-              Itemlist.map((item, index) => (
+                Itemlist.map((item, index) => (
                   <div
                     key={item._id}
                     className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -756,8 +889,8 @@ const UploadClientAssets = () => {
                 ))
               )}
             </div>
-            </div>
-        </div>    
+          </div>
+        </div>
       </div>
     </div>
   );
