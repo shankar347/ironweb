@@ -136,8 +136,9 @@ const Home = () => {
             muted={isMuted}
             playsInline
             className="rounded-2xl 
-            max-h-[500px]
-            shadow-lg w-full h-auto hover:scale-[1.01] transition-transform duration-300 object-cover"
+            max-h-[700px] md:max-h-[1000px] lg:max-h-[1000px]
+            shadow-lg w-full h-auto 
+            hover:scale-[1.01] transition-transform duration-300 object-cover"
           />
           {/* Speaker button */}
           <button

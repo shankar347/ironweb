@@ -6,7 +6,7 @@ import {
   Clock, CreditCard, BanknoteIcon, Receipt, 
   ShoppingBasketIcon, Truck, CheckCircle, AlertCircle,
   ChevronRight, Info, X, FileText, Plus, Minus, Tag,
-  Package, Calendar, Shield, Sparkles, BadgeCheck
+  Package, Calendar, Shield, Sparkles, BadgeCheck, Gift
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
@@ -14,16 +14,73 @@ import { SteamContext } from '../../hooks/steamcontext';
 import { API_URL } from '../../hooks/tools';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface ClothItem {
+  item: string;
+  quantity: string;
+  cost: string;
+  name?: string;
+  count?: number;
+}
+
+interface SubscriptionCloth {
+  name: string;
+  count: number;
+  _id: string;
+}
+
+interface Subscription {
+  _id: string;
+  plan: string;
+  credits: number;
+  cloths: SubscriptionCloth[];
+  startdate: string;
+  enddate: string;
+  status: string;
+}
+
 const Ordersummary = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showTerms, setShowTerms] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
+    const [useSubscription, setUseSubscription] = useState(false);
+    const [subscription, setSubscription] = useState<Subscription | null>(null);
+    const [redemptionDetails, setRedemptionDetails] = useState<{
+        canRedeem: boolean;
+        totalCreditsNeeded: number;
+        insufficientItems: string[];
+        redeemedItems: { name: string; count: number; cost: number }[];
+        payableAmount: number;
+        redeemableCredits: number;
+        remainingCredits: number;
+    } | null>(null);
+    
     const steamcontext = useContext(SteamContext);
-    const { orderdetails, setorderdetails } = steamcontext;
+    const { orderdetails, setorderdetails, User:User1 } = steamcontext;
     const [localOrderDetails, setLocalOrderDetails] = useState<any>(null);
     const [showFullAddress, setShowFullAddress] = useState(false);
 
     const navigate = useNavigate();
+
+    // Fetch active subscription on component mount
+    useEffect(() => {
+        const fetchSubscription = async () => {
+            if (User1?.subscription?._id) {
+                try {
+                    const response = await fetch(`${API_URL}/subscription/${User1.subscription._id}`, {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        setSubscription(data.subscription);
+                    }
+                } catch (error) {
+                    console.error('Error fetching subscription:', error);
+                }
+            }
+        };
+
+        fetchSubscription();
+    }, [User]);
 
     useEffect(() => {
         const checkdetails = localStorage.getItem('orderdetails');
@@ -37,11 +94,78 @@ const Ordersummary = () => {
         }
     }, []);
 
+    // Calculate redemption details when subscription or order details change
+    useEffect(() => {
+        if (subscription && localOrderDetails?.order_cloths) {
+            calculateRedemptionDetails();
+        }
+    }, [subscription, localOrderDetails, useSubscription]);
+
+    const calculateRedemptionDetails = () => {
+        if (!subscription || !localOrderDetails?.order_cloths) return;
+
+        const items = localOrderDetails.order_cloths;
+        const totalAmount = Number(localOrderDetails?.otherdetails?.totalamount || '0');
+        
+        // Calculate total credits needed (assuming 1 credit = ₹1)
+        const totalCreditsNeeded = items.reduce((sum: number, item: ClothItem) => {
+            return sum + (Number(item.cost) * Number(item.quantity));
+        }, 0);
+
+        // Check each item against subscription cloth limits
+        const insufficientItems: string[] = [];
+        const redeemedItems: { name: string; count: number; cost: number }[] = [];
+        let totalRedeemableCredits = 0;
+
+        items.forEach((item: ClothItem) => {
+            const clothName = item.item;
+            const requestedCount = Number(item.quantity);
+            
+            // Find matching cloth in subscription
+            const subscriptionCloth = subscription.cloths.find(
+                (c: SubscriptionCloth) => c.name.toLowerCase() === clothName.toLowerCase()
+            );
+
+            if (subscriptionCloth) {
+                const availableCount = subscriptionCloth.count;
+                if (availableCount < requestedCount) {
+                    insufficientItems.push(`${clothName}: Need ${requestedCount}, Available ${availableCount}`);
+                } else {
+                    const itemCost = Number(item.cost) * requestedCount;
+                    totalRedeemableCredits += itemCost;
+                    redeemedItems.push({
+                        name: clothName,
+                        count: requestedCount,
+                        cost: itemCost
+                    });
+                }
+            } else {
+                insufficientItems.push(`${clothName} not available in your subscription plan`);
+            }
+        });
+
+        // Check if we have enough total credits
+        const hasEnoughCredits = subscription.credits >= totalRedeemableCredits;
+        
+        // Calculate payable amount (items not covered by subscription)
+        const payableAmount = totalAmount - totalRedeemableCredits;
+
+        setRedemptionDetails({
+            canRedeem: insufficientItems.length === 0 && hasEnoughCredits,
+            totalCreditsNeeded: totalRedeemableCredits,
+            insufficientItems,
+            redeemedItems,
+            payableAmount: payableAmount > 0 ? payableAmount : 0,
+            redeemableCredits: totalRedeemableCredits,
+            remainingCredits: subscription.credits - totalRedeemableCredits
+        });
+    };
+
     // Format data for API
     const prepareApiData = () => {
         if (!localOrderDetails) return null;
 
-        return {
+        const apiData: any = {
             userdetails: {
                 area: localOrderDetails?.userdetails?.area || '',
                 city: localOrderDetails?.userdetails?.city || '',
@@ -60,10 +184,52 @@ const Ordersummary = () => {
             },
             order_cloths: localOrderDetails?.order_cloths || []
         };
+
+        // Add subscription redemption data if applicable
+        if (useSubscription && subscription && redemptionDetails?.canRedeem) {
+            apiData.subscriptionRedemption = {
+                subscriptionId: subscription._id,
+                usedCredits: redemptionDetails.redeemableCredits,
+                redeemedItems: redemptionDetails.redeemedItems,
+                payableAmount: redemptionDetails.payableAmount
+            };
+        }
+
+        return apiData;
     };
 
-    const calculateItemTotal = (cost: string, quantity: string) => {
-        return Number(cost) * Number(quantity);
+    const updateSubscriptionAfterOrder = async () => {
+        if (!subscription || !redemptionDetails) return;
+
+        try {
+            const items = redemptionDetails.redeemedItems.map(item => ({
+                name: item.name,
+                count: item.count
+            }));
+
+            const response = await fetch(`${API_URL}/subscription/update-after-order`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    usedCredits: redemptionDetails.redeemableCredits,
+                    items: items
+                }),
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update subscription');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Error updating subscription:', error);
+            throw error;
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -100,8 +266,18 @@ const Ordersummary = () => {
             return;
         }
 
+        // Validate subscription usage
+        if (useSubscription && subscription) {
+            if (!redemptionDetails?.canRedeem) {
+                toast.error('Cannot redeem subscription: ' + 
+                    (redemptionDetails?.insufficientItems.join(', ') || 'Insufficient credits'));
+                return;
+            }
+        }
+
         setIsLoading(true);
         try {
+            // First create the order
             const res = await fetch(`${API_URL}/orders/createorder`, {
                 method: 'POST',
                 headers: {
@@ -126,6 +302,17 @@ const Ordersummary = () => {
             if (data?.error) {
                 toast.error(data.error);
                 return;
+            }
+
+            // If subscription was used, update it
+            if (useSubscription && subscription && redemptionDetails?.canRedeem) {
+                try {
+                    await updateSubscriptionAfterOrder();
+                    toast.success(`Successfully redeemed ${redemptionDetails.redeemableCredits} credits from your subscription!`);
+                } catch (subError: any) {
+                    toast.warning('Order placed but subscription update failed. Please contact support.');
+                    console.error('Subscription update error:', subError);
+                }
             }
 
             // Clear localStorage and context
@@ -159,6 +346,7 @@ const Ordersummary = () => {
                         className="bg-card w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl sm:rounded-2xl shadow-2xl border"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {/* ... existing Terms modal content ... */}
                         <div className="sticky top-0 bg-card border-b p-4 sm:p-6 flex justify-between items-center">
                             <div className="flex items-center space-x-2 sm:space-x-3">
                                 <div className="bg-primary/10 p-1 sm:p-2 rounded-lg">
@@ -308,6 +496,88 @@ const Ordersummary = () => {
                         </motion.p>
                     </div>
 
+                    {/* Subscription Redemption Section - New */}
+                    {subscription && subscription.status === 'active' && (
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.55 }}
+                            className="mb-4 sm:mb-6"
+                        >
+                            <Card className="p-4 sm:p-6 border-2 border-primary/20 shadow-lg rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="bg-primary p-1.5 sm:p-2 rounded-lg">
+                                            <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-foreground text-sm sm:text-base">Active Subscription</h3>
+                                            <p className="text-xs text-muted-foreground">{subscription.plan} • {subscription.credits} credits remaining</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            id="useSubscription"
+                                            checked={useSubscription}
+                                            onChange={(e) => setUseSubscription(e.target.checked)}
+                                            className="w-4 h-4 rounded border-2 border-primary text-primary focus:ring-primary"
+                                        />
+                                        <label htmlFor="useSubscription" className="text-xs sm:text-sm font-medium cursor-pointer">
+                                            Redeem Credits
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {useSubscription && redemptionDetails && (
+                                    <div className="mt-3 space-y-2">
+                                        {redemptionDetails.canRedeem ? (
+                                            <>
+                                                <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/20">
+                                                    <p className="text-green-600 font-medium text-xs sm:text-sm flex items-center">
+                                                        <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                                                        Eligible for redemption!
+                                                    </p>
+                                                    <div className="mt-2 space-y-1">
+                                                        <p className="text-xs text-muted-foreground flex justify-between">
+                                                            <span>Credits to redeem:</span>
+                                                            <span className="font-bold text-green-600">₹{redemptionDetails.redeemableCredits}</span>
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground flex justify-between">
+                                                            <span>Remaining credits:</span>
+                                                            <span className="font-bold">₹{redemptionDetails.remainingCredits}</span>
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground flex justify-between pt-1 border-t border-green-500/20">
+                                                            <span>Payable amount:</span>
+                                                            <span className="font-bold text-lg text-primary">₹{redemptionDetails.payableAmount}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+                                                <p className="text-red-600 font-medium text-xs sm:text-sm flex items-center">
+                                                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                                                    Cannot redeem subscription
+                                                </p>
+                                                {redemptionDetails.insufficientItems.length > 0 && (
+                                                    <ul className="mt-2 space-y-1">
+                                                        {redemptionDetails.insufficientItems.map((issue, idx) => (
+                                                            <li key={idx} className="text-xs text-red-600/80 flex items-start">
+                                                                <span className="mr-1">•</span>
+                                                                {issue}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </Card>
+                        </motion.div>
+                    )}
+
                     {/* Items Details Card */}
                     {localOrderDetails?.order_cloths && localOrderDetails.order_cloths.length > 0 && (
                         <motion.div
@@ -327,42 +597,54 @@ const Ordersummary = () => {
                                 </div>
 
                                 <div className="space-y-2 sm:space-y-3">
-                                    {localOrderDetails.order_cloths.map((item: any, index: number) => (
-                                        <motion.div
-                                            key={index}
-                                            initial={{ x: -20, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.7 + index * 0.05 }}
-                                            className="flex justify-between items-start sm:items-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-secondary/20 hover:bg-secondary/30 transition-colors"
-                                        >
-                                            <div className="flex items-start space-x-2 sm:space-x-3">
-                                                <div className="bg-primary/10 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
-                                                    <Shirt className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <span className="font-medium text-foreground text-sm sm:text-base block truncate">
-                                                        {item.item}
-                                                    </span>
-                                                    <div className="flex items-center space-x-2 mt-1">
-                                                        <span className="text-xs sm:text-sm text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-                                                            {item.quantity} × ₹{item.cost}
+                                    {localOrderDetails.order_cloths.map((item: any, index: number) => {
+                                        const isRedeemed = useSubscription && redemptionDetails?.redeemedItems.some(
+                                            ri => ri.name.toLowerCase() === item.item.toLowerCase()
+                                        );
+                                        
+                                        return (
+                                            <motion.div
+                                                key={index}
+                                                initial={{ x: -20, opacity: 0 }}
+                                                animate={{ x: 0, opacity: 1 }}
+                                                transition={{ delay: 0.7 + index * 0.05 }}
+                                                className={`flex justify-between items-start sm:items-center p-3 sm:p-4 rounded-lg sm:rounded-xl transition-colors ${
+                                                    isRedeemed ? 'bg-green-500/10 border border-green-500/20' : 'bg-secondary/20 hover:bg-secondary/30'
+                                                }`}
+                                            >
+                                                <div className="flex items-start space-x-2 sm:space-x-3">
+                                                    <div className="bg-primary/10 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+                                                        <Shirt className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <span className="font-medium text-foreground text-sm sm:text-base block truncate">
+                                                            {item.item}
+                                                            {isRedeemed && (
+                                                                <span className="ml-2 text-xs bg-green-500 text-white px-1.5 py-0.5 rounded-full">
+                                                                    Redeemed
+                                                                </span>
+                                                            )}
                                                         </span>
-                                                        <span className="text-xs sm:text-sm font-medium text-primary hidden sm:inline">
-                                                            = ₹{calculateItemTotal(item.cost, item.quantity)}
-                                                        </span>
+                                                        <div className="flex items-center space-x-2 mt-1">
+                                                            <span className="text-xs sm:text-sm text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                                                                {item.quantity} × ₹{item.cost}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex flex-col items-end">
-                                                <span className="font-bold text-foreground text-sm sm:text-base md:text-lg">
-                                                    ₹{calculateItemTotal(item.cost, item.quantity)}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground mt-0.5 sm:hidden">
-                                                    {item.quantity} × ₹{item.cost}
-                                                </span>
-                                            </div>
-                                        </motion.div>
-                                    ))}
+                                                <div className="flex flex-col items-end">
+                                                    <span className={`font-bold text-sm sm:text-base md:text-lg ${
+                                                        isRedeemed ? 'text-green-600' : 'text-foreground'
+                                                    }`}>
+                                                        ₹{calculateItemTotal(item.cost, item.quantity)}
+                                                        {isRedeemed && (
+                                                            <span className="text-xs text-green-600 ml-1">(Redeemed)</span>
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
 
                                     {/* Items Summary */}
                                     <div className="pt-3 sm:pt-4 border-t border-secondary/30">
@@ -419,12 +701,6 @@ const Ordersummary = () => {
                                         value: localOrderDetails?.otherdetails?.deliverySpeed || 'normal', 
                                         icon: Truck,
                                         color: 'text-purple-600'
-                                    },
-                                    { 
-                                        label: 'Total Amount', 
-                                        value: `₹${localOrderDetails?.otherdetails?.totalamount || '0'}`, 
-                                        icon: BanknoteIcon,
-                                        color: 'text-primary'
                                     }
                                 ].map((item, index) => (
                                     <motion.div
@@ -440,11 +716,42 @@ const Ordersummary = () => {
                                             </div>
                                             <span className="font-medium text-foreground text-sm sm:text-base">{item.label}</span>
                                         </div>
-                                        <span className={`font-bold text-sm sm:text-base md:text-lg ${item.label === 'Total Amount' ? 'text-primary' : 'text-foreground'}`}>
+                                        <span className="font-bold text-sm sm:text-base md:text-lg text-foreground">
                                             {item.value}
                                         </span>
                                     </motion.div>
                                 ))}
+
+                                {/* Total Amount with Subscription Adjustment */}
+                                <motion.div
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    transition={{ delay: 1.2 }}
+                                    className="flex justify-between items-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors"
+                                >
+                                    <div className="flex items-center space-x-2 sm:space-x-3">
+                                        <div className="bg-primary p-1.5 sm:p-2 rounded-lg">
+                                            <BanknoteIcon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                                        </div>
+                                        <span className="font-bold text-foreground text-sm sm:text-base">Total Amount</span>
+                                    </div>
+                                    <div className="text-right">
+                                        {useSubscription && redemptionDetails ? (
+                                            <>
+                                                <span className="text-sm text-muted-foreground line-through mr-2">
+                                                    ₹{localOrderDetails?.otherdetails?.totalamount || '0'}
+                                                </span>
+                                                <span className="font-bold text-lg md:text-xl text-primary">
+                                                    ₹{redemptionDetails.payableAmount}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className="font-bold text-lg md:text-xl text-primary">
+                                                ₹{localOrderDetails?.otherdetails?.totalamount || '0'}
+                                            </span>
+                                        )}
+                                    </div>
+                                </motion.div>
                             </div>
                         </Card>
                     </motion.div>
@@ -614,9 +921,9 @@ const Ordersummary = () => {
                         </Button>
                         <Button
                             onClick={handleSubmit}
-                            disabled={isLoading || !acceptedTerms}
+                            disabled={isLoading || !acceptedTerms || (useSubscription && !redemptionDetails?.canRedeem)}
                             className={`flex-1 py-2 sm:py-3 text-sm sm:text-base md:text-lg font-bold transition-all ${
-                                !acceptedTerms 
+                                !acceptedTerms || (useSubscription && !redemptionDetails?.canRedeem)
                                     ? 'bg-muted text-muted-foreground cursor-not-allowed' 
                                     : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl'
                             }`}
@@ -633,7 +940,11 @@ const Ordersummary = () => {
                             ) : (
                                 <span className="flex items-center justify-center">
                                     <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-                                    <span className="text-xs sm:text-sm">Place Order Now</span>
+                                    <span className="text-xs sm:text-sm">
+                                        {useSubscription && redemptionDetails?.payableAmount === 0 
+                                            ? 'Redeem & Place Order' 
+                                            : 'Place Order Now'}
+                                    </span>
                                 </span>
                             )}
                         </Button>
@@ -650,14 +961,21 @@ const Ordersummary = () => {
                             <div>
                                 <p className="text-xs text-muted-foreground">Total Amount</p>
                                 <p className="font-bold text-lg text-primary">
-                                    ₹{localOrderDetails?.otherdetails?.totalamount || '0'}
+                                    {useSubscription && redemptionDetails 
+                                        ? `₹${redemptionDetails.payableAmount}` 
+                                        : `₹${localOrderDetails?.otherdetails?.totalamount || '0'}`}
                                 </p>
+                                {useSubscription && redemptionDetails && redemptionDetails.payableAmount < Number(localOrderDetails?.otherdetails?.totalamount) && (
+                                    <p className="text-xs text-green-600">
+                                        Saved: ₹{redemptionDetails.redeemableCredits}
+                                    </p>
+                                )}
                             </div>
                             <Button
                                 onClick={handleSubmit}
-                                disabled={isLoading || !acceptedTerms}
+                                disabled={isLoading || !acceptedTerms || (useSubscription && !redemptionDetails?.canRedeem)}
                                 className={`px-6 font-bold ${
-                                    !acceptedTerms 
+                                    !acceptedTerms || (useSubscription && !redemptionDetails?.canRedeem)
                                         ? 'bg-muted text-muted-foreground cursor-not-allowed' 
                                         : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary'
                                 }`}
@@ -678,6 +996,11 @@ const Ordersummary = () => {
                                 Please accept terms above
                             </p>
                         )}
+                        {useSubscription && !redemptionDetails?.canRedeem && acceptedTerms && (
+                            <p className="text-xs text-destructive text-center">
+                                Cannot redeem with current subscription
+                            </p>
+                        )}
                     </motion.div>
                 </motion.div>
             </div>
@@ -686,6 +1009,11 @@ const Ordersummary = () => {
             <div className="h-20 sm:hidden"></div>
         </motion.div>
     );
+};
+
+// Helper function
+const calculateItemTotal = (cost: string, quantity: string) => {
+    return Number(cost) * Number(quantity);
 };
 
 export default Ordersummary;

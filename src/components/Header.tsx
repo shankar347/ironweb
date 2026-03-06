@@ -67,6 +67,13 @@ const Header = () => {
               >
                 Contact
               </Link>
+                <Link
+                to="/subscription"
+                className={`font-semibold transition-colors hover:text-primary ${isActive('/contact') ? 'text-primary' : 'text-foreground'
+                  }`}
+              >
+                Subscription
+              </Link>
             </nav>
           }
 
@@ -179,6 +186,14 @@ const Header = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Profile
+              </Link>
+                    <Link
+                to="/subscription"
+                className={`font-medium transition-colors hover:text-primary ${isActive('/contact') ? 'text-primary' : 'text-foreground'
+                  }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Subscription
               </Link>
               <div className="flex flex-col space-y-2 pt-4">
                 <Link to="/customer/ordertrack" onClick={() => setIsMenuOpen(false)}>

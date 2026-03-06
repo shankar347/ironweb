@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Crown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { API_URL } from '../hooks/tools';
@@ -190,17 +190,21 @@ const CarouselHeroSection = ({ User }) => {
   Book Now – Get 25% Off
 </Button>
           </Link>
-          <Link to="/customer/ordertrack">
-            <Button
-              size="lg"
-              variant="outline"
-              className="text-primary h-14 bg-gray-100 hover:text-white
-                         text-md sm:text-lg md:text-lg lg:text-lg 
-                          min-w-[150px] md:h-16 py-3.5
-                         px-[80px] md:px-20 lg:px-20 sm:px-8 hover:bg-primary"
-            >
-              Track Order
-            </Button>
+          <Link to="/subscription">
+<Button
+  size="lg"
+  variant="outline"
+  className="text-primary h-14 bg-gray-100 hover:text-white
+             text-md 
+             sm:text-lg md:text-lg lg:text-lg 
+             min-w-[140px] md:h-16 py-3
+             px-[50px] md:px-10 lg:px-10 sm:px-8 
+             hover:bg-primary
+             flex items-center justify-center"
+>
+  <Crown className="w-5 h-5 "  size={30}/>
+  Get Subscription
+</Button>
           </Link>
         </div>
 

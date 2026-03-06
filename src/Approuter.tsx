@@ -39,6 +39,9 @@ import Agentanalysis from './pages/agentpages/agentanalysis';
 import Agentorders from './pages/agentpages/agentorders';
 import Agentprofile from './pages/agentpages/agentprofile';
 import Uploadcleintassets from './pages/adminpages/uploadcleintassets';
+import PlansPage from './pages/userpages/PlansPage';
+import ConfirmationPage from './pages/userpages/ConfirmationPage';
+import SubscriptionSuccess from './pages/userpages/subscripitonsucess';
 
 const ProtectedRoute = ({ user, allowed, children }: { user: any, allowed: "customer" | "agent" | "admin", children: React.ReactNode }) => {
     if (!user) {
@@ -85,6 +88,9 @@ const Approuter = () => {
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/select-role" element={<BookingSelection />} />
+                <Route path="/subscription" element={<PlansPage />} />
+                <Route path="/confirmation" element={<ConfirmationPage />} />
+                
 
                 {/* Customer Auth Routes */}
                 <Route path="/customer/register" element={!User ? <CustomerRegister /> : <Navigate to="/" />} />
@@ -111,6 +117,9 @@ const Approuter = () => {
                     <ProtectedRoute user={User} allowed="customer"><Customereditprofile /></ProtectedRoute>
                 } />
 
+   <Route path="/customer/subscription-success" element={
+                    <ProtectedRoute user={User} allowed="customer"><SubscriptionSuccess /></ProtectedRoute>
+                } />
                 {/* Agent Public Auth Routes */}
                 <Route path="/agent/register" element={<AgentRegister />} />
                 <Route path="/agent/login" element={<AgentLogin />} />
