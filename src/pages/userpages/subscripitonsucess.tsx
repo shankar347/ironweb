@@ -33,6 +33,8 @@ import { toast } from 'react-toastify';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Base64 encoded logo (replace with your actual logo)
+
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,6 +44,48 @@ const SubscriptionSuccess = () => {
   const [showAnimation, setShowAnimation] = useState(true);
   const [progress, setProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const [logoBase64, setLogoBase64] = useState(null);
+
+useEffect(() => {
+  const loadLogo = async () => {
+    try {
+      const response = await fetch('/assets/logobg.png');
+      const blob = await response.blob();
+
+      const img = new Image();
+      const url = URL.createObjectURL(blob);
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+
+        const maxWidth = 200;
+        const scale = maxWidth / img.width;
+
+        canvas.width = maxWidth;
+        canvas.height = img.height * scale;
+
+        const ctx = canvas.getContext('2d');
+
+        // preserve transparency
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const base64 = canvas.toDataURL('image/png');
+
+        setLogoBase64(base64);
+      };
+
+      img.src = url;
+
+    } catch (error) {
+      console.error("Error loading logo:", error);
+    }
+  };
+
+  loadLogo();
+}, []);
 
   // Get subscription data from navigation state
   const subscription = location.state?.subscription;
@@ -149,119 +193,196 @@ const SubscriptionSuccess = () => {
     }
   };
 
-  // Generate PDF Invoice
+  // Generate Professional PDF Invoice
   const generateInvoice = async () => {
     setIsDownloading(true);
-    
+
     try {
-      const doc = new jsPDF();
-      
-      // Company Details
-      doc.setFillColor(59, 130, 246);
-      doc.rect(0, 0, 210, 40, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Colors
+      const primaryColor = [59, 130, 246]; // Blue-600
+      const secondaryColor = [37, 99, 235]; // Blue-700
+      const lightGray = [249, 250, 251];
+      const darkGray = [75, 85, 99];
+      const textColor = [31, 41, 55];
+
+      console.log(logoBase64,'bse'  )
+
+      // Add logo (top left)
+      if (logoBase64) {
+        try {
+         doc.addImage(logoBase64, 'PNG', 20, 15, 35, 20);
+        } catch (error) {
+          console.warn('Could not add logo:', error);
+        }
+      }
+
+      // Company Name (top right)
+      doc.setFontSize(19);
       doc.setFont('helvetica', 'bold');
-      doc.text('Steemer', 105, 15, { align: 'center' });
-      
-      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text('STEEMER', 190, 28, { align: 'right' });
+
+      // Decorative line
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setLineWidth(0.5);
+      doc.line(20, 35, 190, 35);
+
+      // Invoice Title
+      doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
-      doc.text('Professional Laundry & Ironing Service', 105, 25, { align: 'center' });
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+      doc.text('INVOICE RECEIPT', 105, 50, { align: 'center' });
+
+      // Invoice details box
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.roundedRect(20, 60, 170, 25, 3, 3, 'F');
       
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text('INVOICE', 105, 35, { align: 'center' });
-      
-      // Invoice Details
-      doc.setTextColor(0, 0, 0);
+      const invoiceNo = `INV-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+      const currentDate = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
       doc.setFontSize(10);
-      
-      const invoiceNo = `INV-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-      const currentDate = new Date().toLocaleDateString('en-IN');
-      
-      doc.text(`Invoice No: ${invoiceNo}`, 20, 50);
-      doc.text(`Date: ${currentDate}`, 20, 57);
-      doc.text(`Order ID: ${orderId || 'N/A'}`, 20, 64);
-      
-      // Customer Details
-      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.text(`Invoice No: ${invoiceNo}`, 25, 72);
+      doc.text(`Date: ${currentDate}`, 25, 79);
+      doc.text(`Order ID: ${orderId || 'N/A'}`, 130, 72);
+
+      // Billing Information Section
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('Bill To:', 20, 80);
-      
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text('BILL TO', 20, 100);
+
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Name: ${currentUser?.name || currentUser?.email?.split('@')[0] || 'Customer'}`, 20, 90);
-      doc.text(`Email: ${currentUser?.email || 'N/A'}`, 20, 97);
-      doc.text(`Phone: ${currentUser?.phoneno || 'N/A'}`, 20, 104);
-      
-      // Subscription Details
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+      doc.text(`${currentUser?.name || currentUser?.email?.split('@')[0] || 'Customer'}`, 20, 110);
+      doc.text(`${currentUser?.email || 'N/A'}`, 20, 117);
+      doc.text(`${currentUser?.phoneno || 'N/A'}`, 20, 124);
+
+      // Subscription Details Box
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.roundedRect(20, 135, 170, 35, 3, 3, 'F');
+
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('Subscription Details:', 20, 120);
-      
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text('SUBSCRIPTION DETAILS', 25, 145);
+
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Plan: ${subscription.plan}`, 20, 130);
-      doc.text(`Start Date: ${formatDateForInvoice(subscription.startdate)}`, 20, 137);
-      doc.text(`Valid Until: ${getExpiryDateForInvoice()}`, 20, 144);
-      doc.text(`Total Credits: ${subscription.credits}`, 20, 151);
-      
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+      doc.text(`Plan: ${subscription.plan}`, 25, 155);
+      doc.text(`Start Date: ${formatDateForInvoice(subscription.startdate)}`, 80, 155);
+      doc.text(`Valid Until: ${getExpiryDateForInvoice()}`, 135, 155);
+      doc.text(`Total Credits: ${subscription.credits}`, 25, 165);
+
       // Garments Table
       if (subscription.cloths && subscription.cloths.length > 0) {
         const tableData = subscription.cloths.map(cloth => [
           cloth.name,
           cloth.count.toString(),
-          'Included'
+          'Included in Plan'
         ]);
         
         autoTable(doc, {
-          startY: 165,
-          head: [['Garment', 'Quantity', 'Type']],
+          startY: 185,
+          head: [['Garment Description', 'Quantity', 'Inclusion Type']],
           body: tableData,
-          theme: 'striped',
-          headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255] },
-          styles: { fontSize: 9 }
+          theme: 'grid',
+          headStyles: { 
+            fillColor: primaryColor,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10,
+            halign: 'center'
+          },
+          bodyStyles: { 
+            fontSize: 9,
+            textColor: textColor
+          },
+          columnStyles: {
+            0: { cellWidth: 80 },
+            1: { cellWidth: 30, halign: 'center' },
+            2: { cellWidth: 60, halign: 'center' }
+          },
+          alternateRowStyles: { fillColor: lightGray },
+          margin: { left: 20, right: 20 }
         });
       }
-      
+
       // Payment Summary
-      const finalY = doc.lastAutoTable?.finalY || 180;
-      
+      const finalY = doc.lastAutoTable?.finalY || 200;
+
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.roundedRect(20, finalY + 15, 170, 25, 3, 3, 'F');
+
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('Payment Summary:', 20, finalY + 20);
-      
-      doc.setFontSize(10);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text('PAYMENT SUMMARY', 25, finalY + 25);
+
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       
-      const col1 = 20;
-      const col2 = 150;
+      // Left column
+      // doc.text('Subtotal:', 25, finalY + 35);
+      // doc.text('GST (18%):', 25, finalY + 42);
+      doc.text('Total Amount:', 25, finalY + 35);
+
+      // Right column (amounts)
+      // doc.setFont('helvetica', 'bold');
+      // const subtotal = subscription.totalamount / 1.18;
+      // const gst = subscription.totalamount - subtotal;
       
-      doc.text('Plan Price:', col1, finalY + 30);
-      doc.text(`₹${subscription.totalamount}`, col2, finalY + 30);
+      // doc.text(`₹${subtotal.toFixed(2)}`, 165, finalY + 35, { align: 'right' });
+      // doc.text(`₹${gst.toFixed(2)}`, 165, finalY + 42, { align: 'right' });
       
-      doc.setFont('helvetica', 'bold');
-      doc.text('Total Amount:', col1, finalY + 40);
-      doc.text(`₹${subscription.totalamount}`, col2, finalY + 40);
-      
+      doc.setFontSize(12);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(`₹${subscription.totalamount.toFixed(2)}`, 165, finalY + 35, { align: 'right' });
+
+      // Terms and Conditions
+      const termsY = finalY + 55;
       doc.setFontSize(8);
-      doc.setFont('helvetica', 'italic');
-      doc.setTextColor(100, 100, 100);
-      doc.text('* This is a computer generated invoice', 20, finalY + 55);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.text('Terms & Conditions:', 20, termsY);
       
+      doc.setFont('helvetica', 'normal');
+      doc.text('• This is a computer generated invoice - valid without signature', 20, termsY + 5);
+      doc.text('• Subscription is non-transferable and non-refundable', 20, termsY + 10);
+      doc.text('• Credits expire based on plan terms and conditions', 20, termsY + 15);
+      doc.text('• For any queries, contact support within 7 days', 20, termsY + 20);
+
       // Footer
-      doc.setFillColor(59, 130, 246);
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.rect(0, 280, 210, 17, 'F');
-      
+
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      doc.text('Thank you for choosing Laundry Service!', 105, 290, { align: 'center' });
-      doc.text('For any queries, contact: steemerservicescontactin@gmail.com', 105, 297, { align: 'center' });
+      doc.text('Thank you for choosing Steemer - Professional Laundry & Ironing Service', 105, 287, { align: 'center' });
+      doc.text('For any queries, contact: steemerservicescontactin@gmail.com | Toll-free: 1800-123-4567', 105, 294, { align: 'center' });
       
+      // Add page border
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setLineWidth(0.2);
+      doc.rect(5, 5, 200, 287);
+
       // Save PDF
-      doc.save(`Steemer_${subscription.plan}_${formatDateForInvoice(new Date())}.pdf`);
+      doc.save(`Steemer_Invoice_${subscription.plan}_${formatDateForInvoice(new Date())}.pdf`);
       
       toast.success('Invoice downloaded successfully!');
     } catch (error) {
@@ -607,10 +728,10 @@ const SubscriptionSuccess = () => {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/customer/profile')}
                   className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl font-semibold hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 flex items-center justify-center transform hover:scale-105"
                 >
-                  Go to Dashboard
+                  Go to Profile
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 
@@ -631,27 +752,12 @@ const SubscriptionSuccess = () => {
                     </>
                   )}
                 </Button>
-                
-                {/* <Button
-                  onClick={shareSubscription}
-                  variant="outline"
-                  className="px-8 py-4 border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-all duration-300 flex items-center justify-center"
-                >
-                  <Share2 className="w-5 h-5 mr-2" />
-                  Share
-                </Button> */}
               </div>
             </div>
           </div>
 
           {/* Additional Info */}
           <div className="mt-8 text-center">
-            <div className="inline-flex items-center bg-blue-50 rounded-full px-6 py-3 border border-blue-200">
-              <Mail className="w-4 h-4 text-blue-600 mr-2" />
-              <p className="text-slate-600">
-                Confirmation sent to <strong className="text-blue-600">{currentUser?.email}</strong>
-              </p>
-            </div>
             <p className="text-sm text-slate-500 mt-4">
               For any queries, contact our support team at{' '}
               <a href="mailto:support@laundryservice.com" className="text-blue-600 hover:underline">

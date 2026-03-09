@@ -1,4 +1,4 @@
-    import { Edit, LogOut, Mail, MapPin, Phone, User, Star, Calendar, Shirt, CreditCard, CheckCircle, Package } from 'lucide-react'
+import { Edit, LogOut, Mail, MapPin, Phone, User, Star, Calendar, Shirt, CreditCard, CheckCircle, Package } from 'lucide-react'
 import React, { useContext, useState } from 'react'
 import { Card } from '../../components/ui/card'
 import { SteamContext } from '../../hooks/steamcontext'
@@ -7,8 +7,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { API_URL } from '../../hooks/tools';
 import ConfirmModal from '../../components/logoutcomponent';
-
-
 
 const Userprofile = () => {
 
@@ -57,11 +55,21 @@ const Userprofile = () => {
         return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
     }
 
+    // Fixed: Calculate usage based on credits instead of days
+    const getCreditsUsed = () => {
+        if (!subscription) return 0
+        return subscription.totalcredits - subscription.credits
+    }
+
+    const getCreditsUsagePercentage = () => {
+        if (!subscription) return 0
+        const creditsUsed = getCreditsUsed()
+        return Math.min(100, Math.round((creditsUsed / subscription.totalcredits) * 100))
+    }
+
     const daysLeft = subscription ? getDaysRemaining(subscription.enddate) : 0
-    const totalDays = subscription
-        ? Math.ceil((new Date(subscription.enddate) - new Date(subscription.startdate)) / (1000 * 60 * 60 * 24))
-        : 1
-    const progressPercent = Math.min(100, Math.round(((totalDays - daysLeft) / totalDays) * 100))
+    const creditsUsed = subscription ? getCreditsUsed() : 0
+    const creditsUsagePercent = subscription ? getCreditsUsagePercentage() : 0
 
     return (
         <div className="min-h-screen bg-secondary/20 py-8 sm:py-12 md:py-16 lg:py-20">
@@ -207,24 +215,27 @@ const Userprofile = () => {
                                     </div>
                                     <div>
                                         <p className="text-xs text-slate-500 mb-0.5">Available Credits</p>
-                                        <p className="text-sm font-semibold text-slate-800">{subscription.credits} credits</p>
+                                        <p className="text-sm font-semibold text-slate-800">{subscription.credits} / {subscription.totalcredits} credits</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Days progress bar */}
+                            {/* Credits progress bar - Fixed to use credits instead of days */}
                             <div className="mb-5">
                                 <div className="flex justify-between text-xs text-slate-500 mb-1.5">
-                                    <span>Plan Usage</span>
-                                    <span className="font-medium text-primary">{daysLeft} days remaining</span>
+                                    <span>Credits Usage</span>
+                                    <span className="font-medium text-primary">{creditsUsed} credits used</span>
                                 </div>
                                 <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                                     <div
                                         className="h-2.5 rounded-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-700"
-                                        style={{ width: `${progressPercent}%` }}
+                                        style={{ width: `${creditsUsagePercent}%` }}
                                     />
                                 </div>
-                                <p className="text-xs text-slate-400 mt-1">{progressPercent}% of plan used</p>
+                                <div className="flex justify-between text-xs text-slate-400 mt-1">
+                                    <span>{creditsUsagePercent}% of credits used</span>
+                                    <span>{daysLeft} days remaining</span>
+                                </div>
                             </div>
 
                             {/* Garment Details */}
@@ -282,4 +293,4 @@ const Userprofile = () => {
     )
 }
 
-export default Userprofile  
+export default Userprofile
