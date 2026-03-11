@@ -642,7 +642,7 @@ const Adminassignoerder: React.FC = () => {
                         ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
                         } whitespace-nowrap`}>
-                        {row.order_paymenttype === 'online payment' ? '💳 Online' : '💵 COD'}
+                        {row.order_paymenttype === 'online' ? '💳 Online' : '💵 COD'}
                     </span>
                 )
             },

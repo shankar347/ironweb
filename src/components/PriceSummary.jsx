@@ -50,9 +50,10 @@ const PriceSummary = ({
             <div>
               <h4 className="font-bold text-slate-900 text-lg">{selectedPlan?.name}</h4>
               <p className="text-sm text-slate-600">
-                {isPopularPlan 
-                  ? `₹{selectedPlan?.price}/month - ${selectedPlan?.credits} credits`
-                  : `${selectedPlan?.baseCredits} base garments included`
+                {!isPopularPlan 
+                 
+                  &&
+                   `${selectedPlan?.baseCredits} base garments included`
                 }
               </p>
             </div>

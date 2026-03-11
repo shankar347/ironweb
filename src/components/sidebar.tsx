@@ -14,7 +14,8 @@ import {
     Truck,
     ChevronLeft,
     ChevronRight,
-    Upload
+    Upload,
+    Crown
 } from 'lucide-react';
 import { SteamContext } from '../hooks/steamcontext';
 import { API_URL } from '../hooks/tools';
@@ -35,6 +36,7 @@ const Sidebar = () => {
         { path: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
         { path: '/admin/users', icon: Users, label: 'Users' },
         { path: '/admin/agents', icon: Truck, label: 'Agents' },
+        {path:'/admin/subscriptions',icon:Crown,label:"Subscriptions"},
         { path: '/admin/assign-orders', icon: UserPlus, label: 'Assign Orders' },
         { path: '/admin/activate-agents', icon: Power, label: 'Activate Agents' },
         { path: '/admin/order-amount', icon: IndianRupee, label: 'Order Amount' },

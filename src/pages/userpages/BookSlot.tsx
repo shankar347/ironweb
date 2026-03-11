@@ -277,9 +277,9 @@ const BookSlot = () => {
         const totalCount = getTotalClothCount();
         
         // First 3 days FREE for normal delivery during AND after launch period
-        if (deliverySpeed === 'normal') {
-            return 0;
-        }
+        // if (deliverySpeed === 'normal') {
+        //     return 0;
+        // }
         
         // Express delivery is First 3 dayscharged
         return deliveryCharges[deliverySpeed];
@@ -597,7 +597,7 @@ const BookSlot = () => {
                                             </div>
                                             <div className="flex items-center space-x-1 sm:space-x-2">
                                                 <Flame className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-300" />
-                                                <span className="text-white text-xs sm:text-sm">Normal delivery is First 3 days FREE</span>
+                                                <span className="text-white text-xs sm:text-sm">Normal delivery is First 3 times FREE</span>
                                             </div>
                                         </div>
                                     </div>
@@ -709,11 +709,8 @@ const BookSlot = () => {
                                                         Normal
                                                     </span>
                                                     <div className="flex flex-col items-center">
-                                                        <span className="line-through text-gray-500 text-xs">₹{deliveryCharges.normal}</span>
-                                                        <span className={`text-xs font-bold ${deliverySpeed === 'normal' ? 'text-green-300' : 'text-green-600'
-                                                            }`}>
-                                                            ₹0
-                                                        </span>
+                                                        <span className={`text-xs ${deliverySpeed === 'normal' ? 'text-orange-100' : 'text-gray-600'
+                                                        }`}>₹{deliveryCharges.normal}</span>
                                                     </div>
                                                     <span className={`text-[10px] sm:text-xs ${deliverySpeed === 'normal' ? 'text-blue-100' : 'text-gray-500'
                                                         }`}>7 hr slots</span>
@@ -838,7 +835,7 @@ const BookSlot = () => {
                                                                 }}
                                                                 className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded-full font-bold"
                                                             >
-                                                                First 3 days FREE
+                                                                First 3 times FREE
                                                             </motion.span>
                                                         )}
                                                     </div>
@@ -872,7 +869,7 @@ const BookSlot = () => {
                                                             className="mt-2 sm:mt-3 p-2 sm:p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg"
                                                         >
                                                             <p className="text-xs sm:text-sm font-medium text-green-800">
-                                                                🎉 <strong>Great News!</strong> Normal delivery is First 3 days FREE for any cloth count!
+                                                                🎉 <strong>Great News!</strong> Normal delivery is First 3 times FREE for any cloth count!
                                                             </p>
                                                             <p className="text-xs text-green-700 mt-1">
                                                                 <strong>Note:</strong> Express delivery charges remain ₹{deliveryCharges.express} for faster service
@@ -1049,7 +1046,7 @@ const BookSlot = () => {
                                                     🎉 Free Normal Delivery!
                                                 </h4>
                                                 <p className="text-white/90 text-xs sm:text-sm">
-                                                    Normal delivery is First 3 days FREE! No minimum items required.
+                                                    Normal delivery is First 3 times FREE! No minimum items required.
                                                 </p>
                                             </div>
                                         </div>
@@ -1360,33 +1357,12 @@ const BookSlot = () => {
                                         <div className="flex items-center space-x-2 sm:space-x-3">
                                             <Truck className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                                             <span className="text-sm sm:text-base">Delivery Charges ({speedInfo[deliverySpeed].title})</span>
-                                            {isFreeDelivery && (
-                                                <motion.span
-                                                    animate={{ 
-                                                        scale: [1, 1.1, 1],
-                                                    }}
-                                                    transition={{ 
-                                                        duration: 2, 
-                                                        repeat: Infinity,
-                                                        ease: "easeInOut" 
-                                                    }}
-                                                    className="text-xs bg-green-100 text-green-800 px-1 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap"
-                                                >
-                                                    FREE
-                                                </motion.span>
-                                            )}
+                                        
                                         </div>
                                         <div className="flex items-center space-x-1 sm:space-x-2">
-                                            {isFreeDelivery ? (
-                                                <>
-                                                    <span className="line-through text-muted-foreground text-xs sm:text-sm">
-                                                        ₹{deliveryCharges[deliverySpeed]}
-                                                    </span>
-                                                    <span className="font-bold text-green-600 text-sm sm:text-base">₹0</span>
-                                                </>
-                                            ) : (
+                                           
                                                 <span className="font-bold text-sm sm:text-base">₹{deliveryCharges[deliverySpeed]}</span>
-                                            )}
+                                        
                                         </div>
                                     </motion.div>
 
@@ -1422,7 +1398,7 @@ const BookSlot = () => {
                                     </motion.div>
 
                                     {/* Savings Summary */}
-                                    {(isFreeDelivery || getDeliveryCharge() === 0) && (
+                                    {/* {(isFreeDelivery || getDeliveryCharge() === 0) && (
                                         <motion.div
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
@@ -1460,7 +1436,7 @@ const BookSlot = () => {
                                                 </div>
                                             </div>
                                         </motion.div>
-                                    )}
+                                    )} */}
                                 </div>
 
                                 {/* Submit Button */}

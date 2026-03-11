@@ -42,6 +42,7 @@ import Uploadcleintassets from './pages/adminpages/uploadcleintassets';
 import PlansPage from './pages/userpages/PlansPage';
 import ConfirmationPage from './pages/userpages/ConfirmationPage';
 import SubscriptionSuccess from './pages/userpages/subscripitonsucess';
+import Subscriptionpage from './pages/adminpages/subscriptionpage';
 
 const ProtectedRoute = ({ user, allowed, children }: { user: any, allowed: "customer" | "agent" | "admin", children: React.ReactNode }) => {
     if (!user) {
@@ -153,6 +154,11 @@ const Approuter = () => {
                 <Route path="/admin/agents" element={
                     <ProtectedRoute user={User} allowed="admin"><Adminagentpage /></ProtectedRoute>
                 } />
+
+                 <Route path="/admin/subscriptions" element={
+                    <ProtectedRoute user={User} allowed="admin"><Subscriptionpage /></ProtectedRoute>
+                } />
+
                 <Route path="/admin/assign-orders" element={
                     <ProtectedRoute user={User} allowed="admin"><Adminassignoerder /></ProtectedRoute>
                 } />

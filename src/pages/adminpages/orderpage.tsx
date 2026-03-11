@@ -6,11 +6,15 @@ import {
     ChevronDown,
     ChevronRight,
     ChevronUp,
-    Trash2
+    Trash2,
+    CreditCard,
+    Wallet,
+    RefreshCw,
+    Award,
+    Gift,
+    DollarSign
 } from 'lucide-react';
 import { API_URL } from '../../hooks/tools';
-
-// Mock API URL - replace with your actual API URL
 
 // Global gradient variable
 const GRADIENT_CLASS = 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700';
@@ -31,6 +35,28 @@ interface OrderCloth {
     _id?: string;
 }
 
+interface PaymentDetails {
+    method?: string;
+    payment_id?: string;
+    order_id?: string;
+    signature?: string;
+    paid_at?: string;
+    amount_paid?: number;
+    currency?: string;
+}
+
+interface SubscriptionRedemption {
+    used: boolean;
+    subscriptionId: string | null;
+    redeemedCredits: number;
+    redeemedItems: Array<{
+        name: string;
+        count: number;
+        cost: number;
+    }>;
+    redeemedAt: string | null;
+}
+
 interface OrderFlow {
     step: string;
     completed: boolean;
@@ -47,10 +73,14 @@ interface Order {
     order_date: string;
     order_cloths?: OrderCloth[];
     order_totalamount: string;
+    order_finalamount?: string;
     order_totalcloths: string;
     order_slot: string;
     order_paymenttype: string;
     order_deliveryspeed: string;
+    payment_status?: string;
+    payment_details?: PaymentDetails;
+    subscription_redemption?: SubscriptionRedemption;
     order_flow: OrderFlow[];
     agent_id?: string;
     agent_name?: string;
@@ -73,8 +103,8 @@ interface Tab {
 }
 
 // DataTable component with expandable rows
-const DataTable: React.FC<{ 
-    data: Order[]; 
+const DataTable: React.FC<{
+    data: Order[];
     columns: Column[];
     expandedRows: Set<string>;
     toggleRow: (id: string) => void;
@@ -118,54 +148,233 @@ const DataTable: React.FC<{
                                         );
                                     })}
                                 </tr>
-                                {expandedRows.has(row._id) && row.order_cloths && (
+                                {expandedRows.has(row._id) && (
                                     <tr className="bg-blue-50">
                                         <td colSpan={columns.length} className="px-6 py-4">
-                                            <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                                <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
-                                                    <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
-                                                    Order Items ({row.order_totalcloths} items)
-                                                </h4>
-                                                <div className="overflow-x-auto">
-                                                    <table className="min-w-full divide-y divide-gray-200">
-                                                        <thead className="bg-gray-100">
-                                                            <tr>
-                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Item</th>
-                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Quantity</th>
-                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Cost per item</th>
-                                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-gray-200">
-                                                            {row.order_cloths.map((cloth, index) => (
-                                                                <tr key={cloth._id || index} className="hover:bg-gray-50">
-                                                                    <td className="px-4 py-3 text-sm font-medium text-gray-800 capitalize">
-                                                                        {cloth.item}
-                                                                    </td>
-                                                                    <td className="px-4 py-3 text-sm text-gray-700">
-                                                                        {cloth.quantity}
-                                                                    </td>
-                                                                    <td className="px-4 py-3 text-sm text-gray-700">
-                                                                        ₹{cloth.cost}
-                                                                    </td>
-                                                                    <td className="px-4 py-3 text-sm font-semibold text-green-600">
-                                                                        ₹{parseInt(cloth.cost) * parseInt(cloth.quantity)}
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                        <tfoot>
-                                                            <tr className="bg-gray-50">
-                                                                <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-gray-700">
-                                                                    Grand Total:
-                                                                </td>
-                                                                <td className="px-4 py-3 text-sm font-bold text-blue-600">
-                                                                    ₹{row.order_totalamount}
-                                                                </td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-                                                </div>
+                                            <div className="space-y-4">
+                                                {/* Order Items Section */}
+                                                {row.order_cloths && row.order_cloths.length > 0 && (
+                                                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                                        <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                                                            <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                                                            Order Items ({row.order_totalcloths} items)
+                                                        </h4>
+                                                        <div className="overflow-x-auto">
+                                                            <table className="min-w-full divide-y divide-gray-200">
+                                                                <thead className="bg-gray-100">
+                                                                    <tr>
+                                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Item</th>
+                                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Quantity</th>
+                                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Cost per item</th>
+                                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-gray-200">
+                                                                    {row.order_cloths.map((cloth, index) => (
+                                                                        <tr key={cloth._id || index} className="hover:bg-gray-50">
+                                                                            <td className="px-4 py-3 text-sm font-medium text-gray-800 capitalize">
+                                                                                {cloth.item}
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-sm text-gray-700">
+                                                                                {cloth.quantity}
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-sm text-gray-700">
+                                                                                ₹{cloth.cost}
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-sm font-semibold text-green-600">
+                                                                                ₹{parseInt(cloth.cost) * parseInt(cloth.quantity)}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                                <tfoot>
+                                                                    <tr className="bg-gray-50">
+                                                                        <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-gray-700">
+                                                                            Sub Total:
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-sm font-bold text-blue-600">
+                                                                            ₹{row.order_totalamount}
+                                                                        </td>
+                                                                    </tr>
+                                                                    {row.order_finalamount && row.order_finalamount !== row.order_totalamount && (
+                                                                        <tr className="bg-green-50">
+                                                                            <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-green-700">
+                                                                                Final Amount (after adjustments):
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-sm font-bold text-green-600">
+                                                                                ₹{row.order_finalamount}
+                                                                            </td>
+                                                                        </tr>
+                                                                    )}
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Payment Details Section - For Online Payments */}
+                                                {row.order_paymenttype === 'online' && row.payment_details && (
+                                                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 p-4">
+                                                        <h4 className="font-semibold text-green-800 mb-3 flex items-center">
+                                                            <CreditCard className="w-4 h-4 mr-2" />
+                                                            Payment Details (Online)
+                                                        </h4>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                                                                <p className="text-xs text-gray-500 mb-1">Payment ID</p>
+                                                                <p className="text-sm font-mono font-medium text-gray-800">{row.payment_details.payment_id || 'N/A'}</p>
+                                                            </div>
+                                                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                                                                <p className="text-xs text-gray-500 mb-1">Order ID</p>
+                                                                <p className="text-sm font-mono font-medium text-gray-800">{row.payment_details.order_id || 'N/A'}</p>
+                                                            </div>
+                                                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                                                                <p className="text-xs text-gray-500 mb-1">Amount Paid</p>
+                                                                <p className="text-lg font-bold text-green-600">₹{row.payment_details.amount_paid || row.order_finalamount || row.order_totalamount}</p>
+                                                            </div>
+                                                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                                                                <p className="text-xs text-gray-500 mb-1">Payment Time</p>
+                                                                <p className="text-sm font-medium text-gray-800">
+                                                                    {row.payment_details.paid_at ? new Date(row.payment_details.paid_at).toLocaleString() : 'N/A'}
+                                                                </p>
+                                                            </div>
+                                                            {row.payment_details.signature && (
+                                                                <div className="bg-white rounded-lg p-3 shadow-sm md:col-span-2">
+                                                                    <p className="text-xs text-gray-500 mb-1">Signature</p>
+                                                                    <p className="text-xs font-mono text-gray-600 break-all">{row.payment_details.signature}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="mt-3 flex items-center">
+                                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${row.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                                                {row.payment_status === 'paid' ? '✅ Payment Successful' : '⏳ Payment Pending'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Cash on Delivery Section */}
+                                                {row.order_paymenttype === 'cash on delivery' && (
+                                                    <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200 p-4">
+                                                        <h4 className="font-semibold text-yellow-800 mb-3 flex items-center">
+                                                            <Wallet className="w-4 h-4 mr-2" />
+                                                            Payment Details (Cash on Delivery)
+                                                        </h4>
+                                                        <div className="bg-white rounded-lg p-4 shadow-sm">
+                                                            <div className="flex items-center justify-between">
+                                                                <div>
+                                                                    <p className="text-sm text-gray-600">Amount to collect</p>
+                                                                    <p className="text-2xl font-bold text-yellow-600">₹{row.order_finalamount || row.order_totalamount}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                                                                        💵 Cash on Delivery
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="mt-3 flex items-center">
+                                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${row.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                                                    {row.payment_status === 'paid' ? '✅ Paid' : '⏳ Pending'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Subscription Redemption Details */}
+                                                {row.subscription_redemption?.used && row.subscription_redemption.redeemedItems && row.subscription_redemption.redeemedItems.length > 0 && (
+                                                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 p-4">
+                                                        <h4 className="font-semibold text-purple-800 mb-3 flex items-center">
+                                                            <Award className="w-4 h-4 mr-2" />
+                                                            Subscription Redemption Details
+                                                        </h4>
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                                                                <p className="text-xs text-gray-500 mb-1">Subscription ID</p>
+                                                                <p className="text-xs font-mono font-medium text-gray-800">
+                                                                    {row.subscription_redemption.subscriptionId ? 
+                                                                        row.subscription_redemption.subscriptionId.substring(0, 8) + '...' : 'N/A'}
+                                                                </p>
+                                                            </div>
+                                                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                                                                <p className="text-xs text-gray-500 mb-1">Credits Redeemed</p>
+                                                                <p className="text-lg font-bold text-purple-600">{row.subscription_redemption.redeemedCredits} credits</p>
+                                                            </div>
+                                                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                                                                <p className="text-xs text-gray-500 mb-1">Redeemed At</p>
+                                                                <p className="text-sm font-medium text-gray-800">
+                                                                    {row.subscription_redemption.redeemedAt ? 
+                                                                        new Date(row.subscription_redemption.redeemedAt).toLocaleString() : 'N/A'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <h5 className="font-medium text-purple-700 mb-2 flex items-center">
+                                                            <Gift className="w-4 h-4 mr-2" />
+                                                            Redeemed Items ({row.subscription_redemption.redeemedItems.length})
+                                                        </h5>
+                                                        <div className="overflow-x-auto">
+                                                            <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg">
+                                                                <thead className="bg-purple-100">
+                                                                    <tr>
+                                                                        <th className="px-4 py-2 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Item</th>
+                                                                        <th className="px-4 py-2 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Quantity</th>
+                                                                        <th className="px-4 py-2 text-left text-xs font-medium text-purple-800 uppercase tracking-wider">Cost Saved</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-gray-200">
+                                                                    {row.subscription_redemption.redeemedItems.map((item, index) => (
+                                                                        <tr key={index} className="hover:bg-purple-50">
+                                                                            <td className="px-4 py-2 text-sm font-medium text-gray-800 capitalize">
+                                                                                {item.name}
+                                                                            </td>
+                                                                            <td className="px-4 py-2 text-sm text-gray-700">
+                                                                                {item.count}
+                                                                            </td>
+                                                                            <td className="px-4 py-2 text-sm font-semibold text-green-600">
+                                                                                ₹{item.cost}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                                <tfoot className="bg-purple-50">
+                                                                    <tr>
+                                                                        <td colSpan={2} className="px-4 py-2 text-right text-sm font-medium text-purple-800">
+                                                                            Total Saved:
+                                                                        </td>
+                                                                        <td className="px-4 py-2 text-sm font-bold text-green-600">
+                                                                            ₹{row.subscription_redemption.redeemedItems.reduce((sum, item) => sum + item.cost, 0)}
+                                                                        </td>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                        
+                                                        {/* Amount Breakdown */}
+                                                        <div className="mt-4 bg-white rounded-lg p-4 shadow-sm">
+                                                            <h5 className="font-medium text-gray-700 mb-2 flex items-center">
+                                                                <DollarSign className="w-4 h-4 mr-2" />
+                                                                Amount Breakdown
+                                                            </h5>
+                                                            <div className="space-y-2">
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-600">Original Amount:</span>
+                                                                    <span className="font-medium text-gray-800">₹{row.order_totalamount}</span>
+                                                                </div>
+                                                                {row.subscription_redemption.redeemedCredits > 0 && (
+                                                                    <div className="flex justify-between text-sm">
+                                                                        <span className="text-gray-600">Subscription Savings:</span>
+                                                                        <span className="font-medium text-green-600">- ₹{row.subscription_redemption.redeemedItems.reduce((sum, item) => sum + item.cost, 0)}</span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex justify-between text-sm font-bold border-t pt-2">
+                                                                    <span className="text-gray-800">Final Amount:</span>
+                                                                    <span className="text-blue-600">₹{row.order_finalamount || row.order_totalamount}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -387,7 +596,7 @@ const OrdersPage: React.FC = () => {
                     <button
                         onClick={() => toggleRow && toggleRow(row._id)}
                         className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200"
-                        title={expandedRows?.has(row._id) ? "Hide items" : "Show items"}
+                        title={expandedRows?.has(row._id) ? "Hide details" : "Show details"}
                     >
                         {expandedRows?.has(row._id) ? (
                             <ChevronUp size={16} className="text-blue-600" />
@@ -395,7 +604,7 @@ const OrdersPage: React.FC = () => {
                             <ChevronRight size={16} className="text-blue-600" />
                         )}
                         <span className="text-sm font-medium text-blue-700">
-                            {expandedRows?.has(row._id) ? 'Hide Items' : 'Show Items'}
+                            {expandedRows?.has(row._id) ? 'Hide Details' : 'Show Details'}
                         </span>
                     </button>
                 )
@@ -487,15 +696,67 @@ const OrdersPage: React.FC = () => {
                 )
             },
             {
+                header: 'Final Amount',
+                key: 'order_finalamount',
+                render: (row: Order) => (
+                    <span className="font-bold text-blue-600 text-base">
+                        ₹{row.order_finalamount || row.order_totalamount}
+                        {row.order_finalamount && row.order_finalamount !== row.order_totalamount && (
+                            <span className="ml-1 text-xs text-green-500">(saved)</span>
+                        )}
+                    </span>
+                )
+            },
+            {
                 header: 'Payment Type',
                 key: 'order_paymenttype',
                 render: (row: Order) => (
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${row.order_paymenttype === 'online payment'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        row.order_paymenttype === 'online' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                        {row.order_paymenttype === 'online payment' ? '💳 Online' : '💵 COD'}
+                        {row.order_paymenttype === 'online' ? (
+                            <>
+                                <CreditCard className="w-3 h-3 mr-1" />
+                                Online
+                            </>
+                        ) : (
+                            <>
+                                <Wallet className="w-3 h-3 mr-1" />
+                                COD
+                            </>
+                        )}
                     </span>
+                )
+            },
+            {
+                header: 'Payment Status',
+                key: 'payment_status',
+                render: (row: Order) => (
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        row.payment_status === 'paid' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                        {row.payment_status === 'paid' ? '✅ Paid' : '⏳ Pending'}
+                    </span>
+                )
+            },
+            {
+                header: 'Subscription Used',
+                key: 'subscription_used',
+                render: (row: Order) => (
+                    row.subscription_redemption?.used ? (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <Award className="w-3 h-3 mr-1" />
+                            Yes ({row.subscription_redemption.redeemedCredits} credits)
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            No
+                        </span>
+                    )
                 )
             },
             {
@@ -637,8 +898,10 @@ const OrdersPage: React.FC = () => {
                 (order.orderid && order.orderid.toString().includes(searchLower)) ||
                 order._id.toLowerCase().includes(searchLower) ||
                 order.order_totalamount.includes(searchLower) ||
+                order.order_finalamount?.includes(searchLower) ||
                 order.order_totalcloths.includes(searchLower) ||
                 order.order_paymenttype.toLowerCase().includes(searchLower) ||
+                order.payment_status?.toLowerCase().includes(searchLower) ||
                 order.order_slot.toLowerCase().includes(searchLower) ||
                 (order.user_name && order.user_name.toLowerCase().includes(searchLower)) ||
                 (order.user_phoneno && order.user_phoneno.includes(searchLower)) ||
@@ -673,8 +936,10 @@ const OrdersPage: React.FC = () => {
                 (order.orderid && order.orderid.toString().includes(searchLower)) ||
                 order._id.toLowerCase().includes(searchLower) ||
                 order.order_totalamount.includes(searchLower) ||
+                order.order_finalamount?.includes(searchLower) ||
                 order.order_totalcloths.includes(searchLower) ||
                 order.order_paymenttype.toLowerCase().includes(searchLower) ||
+                order.payment_status?.toLowerCase().includes(searchLower) ||
                 order.order_slot.toLowerCase().includes(searchLower) ||
                 (order.user_name && order.user_name.toLowerCase().includes(searchLower)) ||
                 (order.user_phoneno && order.user_phoneno.includes(searchLower)) ||

@@ -318,7 +318,7 @@ const Agenthome: React.FC = () => {
     if (!order) return null;
 
     const nextStep = getNextIncompleteStep(order.order_flow);
-    const showQRButton = isLastStep(order.order_flow) && order.order_paymenttype === 'online payment';
+    const showQRButton = isLastStep(order.order_flow) && order.order_paymenttype !== 'online';
     const canUpdate = !showQRButton || qrScanned;
 
     const customerName = order?.user_name || 'N/A';
