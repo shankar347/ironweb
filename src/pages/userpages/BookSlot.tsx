@@ -374,7 +374,7 @@ const BookSlot = () => {
                 timeslot: slotForStorage, // Store with "(Tomorrow)" if applicable
                 originalSlot: actualSlot, // Store the actual slot without "(Tomorrow)"
                 isTomorrow: isTomorrow, // Store boolean flag
-                totalamount: String(getTotalAmount()),
+                totalamount: String(getItemsSubtotal()),
                 totalcloths: String(totalCount),
                 deliverySpeed,
                 deliveryCharge: String(getDeliveryCharge()),

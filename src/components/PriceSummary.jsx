@@ -50,19 +50,16 @@ const PriceSummary = ({
             <div>
               <h4 className="font-bold text-slate-900 text-lg">{selectedPlan?.name}</h4>
               <p className="text-sm text-slate-600">
-                {!isPopularPlan 
-                 
-                  &&
-                   `${selectedPlan?.baseCredits} base garments included`
-                }
+                {selectedPlan?.baseCredits
+                  ? `Up to ${selectedPlan.baseCredits} garments / month`
+                  : selectedPlan?.credits
+                  ? `Up to ${selectedPlan.credits} garments / month`
+                  : ''}
               </p>
             </div>
             <div className="text-right">
-              <div className={`text-2xl font-bold ${isPopularPlan ? 'text-yellow-600' : 'text-blue-600'}`}>
-                ₹{planPrice}
-              </div>
-              <div className="text-xs text-slate-500">
-                {isPopularPlan ? 'Monthly' : 'One-time'}
+              <div className="text-sm font-medium text-blue-600">
+                Price based on selection
               </div>
             </div>
           </div>
@@ -120,32 +117,24 @@ const PriceSummary = ({
       )}
 
       {/* Garment Count Summary */}
-      {!isPopularPlan && (
-        <div className="mb-6">
-          <div className="bg-gradient-to-r from-slate-50 to-blue-50/50 rounded-xl p-4 border border-slate-200">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-600">Total Garments:</span>
-              <span className="font-bold text-slate-900">{totalGarments}</span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-600">Base Credits Used:</span>
-              <span className="font-bold text-blue-600">
-                {baseCreditsUsed}/{selectedPlan?.baseCredits}
-              </span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-600">Remaining Credits:</span>
-              <span className="font-bold text-green-600">{remainingCredits}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-600">Extra Garments:</span>
-              <span className={`font-bold ${extraGarments > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                {extraGarments}
-              </span>
-            </div>
+      <div className="mb-6">
+        <div className="bg-gradient-to-r from-slate-50 to-blue-50/50 rounded-xl p-4 border border-slate-200">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-slate-600">Selected Garments:</span>
+            <span className="font-bold text-slate-900">{totalGarments}</span>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-slate-600">Plan Capacity:</span>
+            <span className="font-bold text-blue-600">
+              {selectedPlan?.baseCredits || selectedPlan?.credits || 0} garments/month
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-slate-600">Remaining Capacity:</span>
+            <span className="font-bold text-green-600">{remainingCredits}</span>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Total Amount Section */}
       <div className="border-t border-slate-200 pt-6">
@@ -162,26 +151,22 @@ const PriceSummary = ({
             </div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold
-             text-blue-500
-              bg-clip-text ">
-              ₹{totalAmount || planPrice}
+            <div className="text-3xl font-bold text-blue-500">
+              ₹{totalAmount || 0}
             </div>
-            {!isPopularPlan && hasExtraGarments && (
-              <p className="text-sm text-slate-600">
-                Base: ₹{planPrice} + Extra: ₹{extraCharges}
-              </p>
-            )}
+            <div className="text-xs text-slate-500 mt-1">
+              {totalGarments} garment{totalGarments !== 1 ? 's' : ''} selected
+            </div>
           </div>
         </div>
 
         {/* Savings Note */}
-        {!isPopularPlan && totalGarments > 0 && totalGarments <= selectedPlan?.baseCredits && (
+        {totalGarments > 0 && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-4">
             <div className="flex items-center">
               <TrendingUp className="w-5 h-5 text-green-600 mr-2" />
               <p className="text-sm text-green-700">
-                <strong>Great choice!</strong> You're within your base credits. No extra charges!
+                <strong>Great choice!</strong> {totalGarments} garment{totalGarments !== 1 ? 's' : ''} selected. Pay only ₹{totalAmount || 0}.
               </p>
             </div>
           </div>
@@ -193,8 +178,7 @@ const PriceSummary = ({
             <Shield className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm text-slate-700">
-                <strong className="text-blue-600">Important:</strong> This is for display purpose only. 
-                No payment will be processed. Our team will contact you for activation.
+                <strong className="text-blue-600">Important:</strong> Your subscription will be activated immediately after successful payment via Razorpay.
               </p>
               <p className="text-xs text-slate-600 mt-2">
                 Prices are final and include all taxes. Delivery charges apply after 3 free monthly deliveries.

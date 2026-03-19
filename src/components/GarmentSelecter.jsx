@@ -12,7 +12,8 @@ const GarmentSelector = ({
   remainingCredits = 0,
   extraGarments = 0,
   extraCharges = 0,
-  totalAmount = 0
+  totalAmount = 0,
+  allowedItems = null
 }) => {
   const isLimitReached = totalGarments >= maxLimit;
 
@@ -98,17 +99,22 @@ const GarmentSelector = ({
     { id: 'chudidhar', label: 'Chudidhar', price: 15, color: 'from-violet-500 to-purple-500' }
   ];
 
+  // Filter garment types based on allowedItems prop
+  const filteredGarmentTypes = allowedItems
+    ? garmentTypes.filter(g => allowedItems.includes(g.id))
+    : garmentTypes;
+
   // Group garments by category for better organization
   const categories = [
     {
       name: 'Mens Wear',
-      items: garmentTypes.filter(g => ['shirt', 'pant', 'cottonShirt', 'tShirt', 'jeansPant'].includes(g.id))
+      items: filteredGarmentTypes.filter(g => ['shirt', 'pant', 'cottonShirt', 'tShirt', 'jeansPant'].includes(g.id))
     },
     {
       name: 'Ladies Wear',
-      items: garmentTypes.filter(g => ['ladiesTop', 'ladiesPant', 'chudidhar', 'normalSaree', 'silkSaree', 'shawl'].includes(g.id))
+      items: filteredGarmentTypes.filter(g => ['ladiesTop', 'ladiesPant', 'chudidhar', 'normalSaree', 'silkSaree', 'shawl'].includes(g.id))
     }
-  ];
+  ].filter(cat => cat.items.length > 0);
 
   return (
     <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl p-4 sm:p-6 shadow-xl border border-slate-200/80">
@@ -141,27 +147,23 @@ const GarmentSelector = ({
 
       {/* Price Summary Bar - Mobile Optimized */}
       <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-blue-100">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
           <div className="text-center">
-            <div className="text-xs text-slate-500">Base Plan</div>
-            <div className="text-base sm:text-xl font-bold text-blue-600">₹{planPrice}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-slate-500">Extra Charges</div>
-            <div className={`text-base sm:text-xl font-bold ${extraCharges > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-              ₹{extraCharges || 0}
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-slate-500">Total Garments</div>
+            <div className="text-xs text-slate-500">Selected</div>
             <div className={`text-base sm:text-xl font-bold ${totalGarments > baseCredits ? 'text-purple-600' : 'text-slate-900'}`}>
-              {totalGarments}
+              {totalGarments} / {maxLimit}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-slate-500">Final Total</div>
+            <div className="text-xs text-slate-500">Remaining</div>
+            <div className="text-base sm:text-xl font-bold text-green-600">
+              {Math.max(0, maxLimit - totalGarments)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-slate-500">Total Price</div>
             <div className="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent">
-              ₹{totalAmount || planPrice}
+              ₹{totalAmount || 0}
             </div>
           </div>
         </div>

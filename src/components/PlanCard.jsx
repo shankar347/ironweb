@@ -7,15 +7,6 @@ const PlanCard = ({ plan, isSelected, onSelect, isPopular }) => {
     onSelect(plan.id);
   };
 
-  // Calculate price per garment for display
-  const getPricePerGarment = () => {
-    if (plan.type === 'popular') {
-      return (plan.price / plan.credits).toFixed(2);
-    } else {
-      return (plan.price / plan.baseCredits).toFixed(2);
-    }
-  };
-
   return (
     <div className={`relative h-full transition-all duration-500 ${isSelected ? 'scale-105 z-10' : 'scale-100'}`}>
       <div className={`relative bg-white rounded-3xl p-4 sm:p-6 h-full min-h-[650px] sm:min-h-[700px] flex flex-col
@@ -30,28 +21,16 @@ const PlanCard = ({ plan, isSelected, onSelect, isPopular }) => {
         <div className="relative text-center mb-4 sm:mb-6 flex-shrink-0">
           <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 mb-2">{plan.name}</h3>
           
-          {/* Price Display */}
+          {/* Price Display - Based on selection */}
           <div className="mb-2">
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent">
-              ₹{plan.price}
-              <span className="text-sm sm:text-base font-normal text-slate-600">
-                {plan.type === 'popular' ? '/month' : ''}
-              </span>
+            <div className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent">
+              Price based on your selection
             </div>
             
             {/* Subtitle */}
             <p className="text-xs sm:text-sm text-slate-600 mt-1 h-10 sm:h-12 flex flex-col justify-center">
-              {plan.type === 'popular' ? (
-                <>
-                  <span className="font-medium">{plan.credits} garments included</span>
-                  <span className="text-xs">(Fixed set: 15 each)</span>
-                </>
-              ) : (
-                <>
-                  <span className="font-medium">{plan.baseCredits} base garments</span>
-                  <span className="text-xs">(₹{getPricePerGarment()}/garment)</span>
-                </>
-              )}
+              <span className="font-medium">{plan.baseCredits || plan.credits} garments / month</span>
+              <span className="text-xs">(Select items below)</span>
             </p>
           </div>
           

@@ -80,6 +80,7 @@ const Agenthome: React.FC = () => {
   const [showQRModal, setShowQRModal] = useState<boolean>(false);
   const [qrScanned, setQrScanned] = useState<boolean>(false);
   const [updating, setUpdating] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   
   // Swap functionality states
   const [isSwapMode, setIsSwapMode] = useState<boolean>(false);
@@ -557,12 +558,12 @@ const Agenthome: React.FC = () => {
           <StatCard icon={CheckCircle} title="Completed" value={stats.completed} delay={300} />
         </div>
 
-        {/* Orders Section Header */}
+        {/* Orders Section Header with Tabs */}
         <div className="mb-6 animate-slideUp" style={{ animationDelay: '400ms' }}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800">Your Orders</h2>
 
-            {orders.length > 0 && (
+            {orders.length > 0 && activeTab === 'active' && (
               <button
                 onClick={handleSwapToggle}
                 className={`${isSwapMode ? 'bg-red-500 hover:bg-red-600' : GRADIENT_CLASS} text-white px-5 py-2.5 rounded-xl font-bold hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-xl flex items-center justify-center gap-2 text-sm md:text-base`}
@@ -582,7 +583,39 @@ const Agenthome: React.FC = () => {
             )}
           </div>
 
-          {isSwapMode && (
+          {/* Tab Buttons */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => { setActiveTab('active'); setIsSwapMode(false); setSelectedForSwap([]); }}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 text-sm md:text-base shadow-md ${
+                activeTab === 'active'
+                  ? `${GRADIENT_CLASS} text-white shadow-blue-300`
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Clock className="w-4 h-4 md:w-5 md:h-5" />
+              Active Orders
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'active' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-700'}`}>
+                {stats.active}
+              </span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('completed'); setIsSwapMode(false); setSelectedForSwap([]); }}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 text-sm md:text-base shadow-md ${
+                activeTab === 'completed'
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-green-300'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />
+              Completed Orders
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'completed' ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>
+                {stats.completed}
+              </span>
+            </button>
+          </div>
+
+          {isSwapMode && activeTab === 'active' && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-sm text-blue-700">
@@ -601,204 +634,359 @@ const Agenthome: React.FC = () => {
           )}
         </div>
 
-        {
-          stats.completed !== orders.length ?
-            (
-              <div>
-                {orders.length === 0 ? (
-                  <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
-                    <Package className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
-                    <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
-                      No orders for agent Today
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {orders.map((order, index) => {
-                      const nextStep = getNextIncompleteStep(order.order_flow);
-                      const currentIndex = getCurrentStepIndex(order.order_flow);
-                      const progress = (currentIndex / order.order_flow.length) * 100;
-                      const isSelected = selectedForSwap.includes(order._id);
-                      const selectionNumber = selectedForSwap.indexOf(order._id) + 1;
-                      const isExpanded = expandedOrderId === order._id;
+        {/* Active Orders Tab */}
+        {activeTab === 'active' && (
+          <div>
+            {orders.filter(o => {
+              const currentIndex = getCurrentStepIndex(o.order_flow);
+              return (currentIndex / o.order_flow.length) * 100 < 100;
+            }).length === 0 ? (
+              <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
+                <Truck className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
+                <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
+                  No active orders right now
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {orders.map((order, index) => {
+                  const nextStep = getNextIncompleteStep(order.order_flow);
+                  const currentIndex = getCurrentStepIndex(order.order_flow);
+                  const progress = (currentIndex / order.order_flow.length) * 100;
+                  const isSelected = selectedForSwap.includes(order._id);
+                  const selectionNumber = selectedForSwap.indexOf(order._id) + 1;
+                  const isExpanded = expandedOrderId === order._id;
 
-                      return (
-                        progress !== 100 && (
+                  if (progress === 100) return null;
+
+                  return (
+                    <div
+                      key={order._id}
+                      className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 animate-slideUp relative"
+                      style={{ animationDelay: `${500 + index * 100}ms` }}
+                    >
+                      {/* Checkbox for swap mode */}
+                      {isSwapMode && (
+                        <div className="absolute top-4 left-4 z-10">
                           <div
-                            key={order._id}
-                            className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 animate-slideUp relative"
-                            style={{ animationDelay: `${500 + index * 100}ms` }}
+                            onClick={() => handleOrderCheckboxClick(order._id)}
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-300 ${isSelected
+                              ? 'bg-blue-500 text-white shadow-lg scale-110'
+                              : 'bg-gray-200 hover:bg-gray-300'
+                              }`}
                           >
-                            {/* Checkbox for swap mode */}
-                            {isSwapMode && (
-                              <div className="absolute top-4 left-4 z-10">
-                                <div
-                                  onClick={() => handleOrderCheckboxClick(order._id)}
-                                  className={`w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-300 ${isSelected
-                                    ? 'bg-blue-500 text-white shadow-lg scale-110'
-                                    : 'bg-gray-200 hover:bg-gray-300'
-                                    }`}
-                                >
-                                  {isSelected ? (
-                                    <span className="text-xl font-bold">{selectionNumber}</span>
-                                  ) : (
-                                    <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
-                                  )}
+                            {isSelected ? (
+                              <span className="text-xl font-bold">{selectionNumber}</span>
+                            ) : (
+                              <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 justify-between mb-4">
+                              <div className='flex items-center gap-3'>
+                                <span className="font-mono text-base font-semibold text-gray-700 bg-gray-100 px-4 py-2 rounded-lg">
+                                  #{order.orderid || order._id.slice(-8)}
+                                </span>
+                                <div className={`w-7 h-7 ${GRADIENT_CLASS} rounded-full text-white items-center flex justify-center text-center text-sm font-bold`}>
+                                  {index + 1}
                                 </div>
                               </div>
-                            )}
+                              <span className="font-mono text-base font-semibold text-gray-700 bg-gray-100 px-4 py-2 rounded-lg">
+                                {order.user_name.trim().length > 13 ?
+                                  order.user_name.slice(0, 13) + '...' : order.user_name}
+                              </span>
+                            </div>
 
-                            <div className="p-6">
-                              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3 justify-between mb-4">
-                                    <div className='flex items-center gap-3'>
-                                      <span className="font-mono text-base font-semibold text-gray-700 bg-gray-100 px-4 py-2 rounded-lg">
-                                        #{order.orderid || order._id.slice(-8)}
-                                      </span>
-                                      <div className={`w-7 h-7 ${GRADIENT_CLASS} rounded-full text-white items-center flex justify-center text-center text-sm font-bold`}>
-                                        {index + 1}
-                                      </div>
-                                    </div>
-                                    <span className="font-mono text-base font-semibold text-gray-700 bg-gray-100 px-4 py-2 rounded-lg">
-                                      {order.user_name.trim().length > 13 ?
-                                        order.user_name.slice(0, 13) + '...' : order.user_name}
-                                    </span>
-                                  </div>
-
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
-                                      <p className="text-xs text-blue-700 font-semibold mb-1">Amount</p>
-                                      <p className="font-bold text-blue-800 text-lg">₹{order.order_totalamount}</p>
-                                    </div>
-                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
-                                      <p className="text-xs text-blue-700 font-semibold mb-1">Clothes</p>
-                                      <p className="font-bold text-blue-800 text-lg">{order.order_totalcloths}</p>
-                                    </div>
-                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
-                                      <p className="text-xs text-blue-700 font-semibold mb-1">Slot</p>
-                                      <p className="font-bold text-blue-800 text-base">{order.order_slot}</p>
-                                    </div>
-                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
-                                      <p className="text-xs text-blue-700 font-semibold mb-1">Delivery</p>
-                                      <p className="font-bold text-blue-800 text-base capitalize">{order.order_deliveryspeed}</p>
-                                    </div>
-                                  </div>
-
-                                  <div className="mb-4">
-                                    <div className="flex justify-between text-sm text-gray-600 font-medium mb-2">
-                                      <span>Order Progress</span>
-                                      <span className="font-bold">{Math.round(progress)}%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
-                                      <div
-                                        className={`${GRADIENT_CLASS} h-3 rounded-full transition-all duration-500 shadow-md`}
-                                        style={{ width: `${progress}%` }}
-                                      ></div>
-                                    </div>
-                                  </div>
-
-                                  {nextStep && (
-                                    <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg mb-4">
-                                      <p className="text-sm text-gray-700">
-                                        Next Step: <span className="font-bold text-blue-700">{nextStep.step}</span>
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div className="flex flex-col gap-3">
-                                  {nextStep && !isSwapMode && (
-                                    <button
-                                      onClick={() => openStatusModal(order)}
-                                      className={`${GRADIENT_CLASS} text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-xl text-base`}
-                                    >
-                                      Change Status
-                                    </button>
-                                  )}
-                                  
-                                  <button
-                                    onClick={() => toggleOrderItems(order._id)}
-                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300"
-                                  >
-                                    {isExpanded ? (
-                                      <>
-                                        <ChevronUp className="w-4 h-4" />
-                                        Hide Items
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Box className="w-4 h-4" />
-                                        View Order Items
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                                <p className="text-xs text-blue-700 font-semibold mb-1">Amount</p>
+                                <p className="font-bold text-blue-800 text-lg">₹{order.order_totalamount}</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                                <p className="text-xs text-blue-700 font-semibold mb-1">Clothes</p>
+                                <p className="font-bold text-blue-800 text-lg">{order.order_totalcloths}</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                                <p className="text-xs text-blue-700 font-semibold mb-1">Slot</p>
+                                <p className="font-bold text-blue-800 text-base">{order.order_slot}</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                                <p className="text-xs text-blue-700 font-semibold mb-1">Delivery</p>
+                                <p className="font-bold text-blue-800 text-base capitalize">{order.order_deliveryspeed}</p>
                               </div>
                             </div>
 
-                            {/* Expanded Order Items Section */}
-                            {isExpanded && (
-                              <div className="px-6 pb-6 animate-slideDown">
-                                <div className="border-t border-gray-200 pt-6">
-                                  <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <ShoppingBag className="w-5 h-5" />
-                                    Order Items Details
-                                  </h4>
-                                  <div className="bg-gray-50 rounded-xl p-4">
-                                    <div className="space-y-3">
-                                      {order.order_cloths?.map((cloth, idx) => (
-                                        <div key={cloth._id} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
-                                          <div className="flex items-center gap-3">
-                                            <div className={`${GRADIENT_CLASS} p-2 rounded-lg`}>
-                                              {getClothIcon(cloth.item)}
-                                            </div>
-                                            <div>
-                                              <p className="font-medium text-gray-800">{cloth.item}</p>
-                                              <p className="text-sm text-gray-600">Quantity: {cloth.quantity}</p>
-                                            </div>
-                                          </div>
-                                          <div className="text-right">
-                                            <p className="font-bold text-blue-600">₹{parseInt(cloth.cost) * parseInt(cloth.quantity)}</p>
-                                            <p className="text-sm text-gray-500">₹{cloth.cost} per item</p>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                    <div className="mt-4 pt-4 border-t border-gray-200">
-                                      <div className="flex justify-between items-center">
-                                        <span className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                          <ShoppingBag className="w-5 h-5" />
-                                          Total Items:
-                                        </span>
-                                        <span className="text-lg font-bold text-gray-800">{order.order_totalcloths}</span>
-                                      </div>
-                                      <div className="flex justify-between items-center mt-2">
-                                        <span className="text-lg font-bold text-green-600 flex items-center gap-2">
-                                          <BadgeDollarSign className="w-5 h-5" />
-                                          Total Amount:
-                                        </span>
-                                        <span className="text-2xl font-bold text-green-600">₹{order.order_totalamount}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
+                            <div className="mb-4">
+                              <div className="flex justify-between text-sm text-gray-600 font-medium mb-2">
+                                <span>Order Progress</span>
+                                <span className="font-bold">{Math.round(progress)}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                                <div
+                                  className={`${GRADIENT_CLASS} h-3 rounded-full transition-all duration-500 shadow-md`}
+                                  style={{ width: `${progress}%` }}
+                                ></div>
+                              </div>
+                            </div>
+
+                            {nextStep && (
+                              <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg mb-4">
+                                <p className="text-sm text-gray-700">
+                                  Next Step: <span className="font-bold text-blue-700">{nextStep.step}</span>
+                                </p>
                               </div>
                             )}
                           </div>
-                        )
-                      );
-                    })}
-                  </div>
-                )}
+
+                          <div className="flex flex-col gap-3">
+                            {nextStep && !isSwapMode && (
+                              <button
+                                onClick={() => openStatusModal(order)}
+                                className={`${GRADIENT_CLASS} text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-xl text-base`}
+                              >
+                                Change Status
+                              </button>
+                            )}
+                            
+                            <button
+                              onClick={() => toggleOrderItems(order._id)}
+                              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="w-4 h-4" />
+                                  Hide Items
+                                </>
+                              ) : (
+                                <>
+                                  <Box className="w-4 h-4" />
+                                  View Order Items
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expanded Order Items Section */}
+                      {isExpanded && (
+                        <div className="px-6 pb-6 animate-slideDown">
+                          <div className="border-t border-gray-200 pt-6">
+                            <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                              <ShoppingBag className="w-5 h-5" />
+                              Order Items Details
+                            </h4>
+                            <div className="bg-gray-50 rounded-xl p-4">
+                              <div className="space-y-3">
+                                {order.order_cloths?.map((cloth) => (
+                                  <div key={cloth._id} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                      <div className={`${GRADIENT_CLASS} p-2 rounded-lg`}>
+                                        {getClothIcon(cloth.item)}
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-gray-800">{cloth.item}</p>
+                                        <p className="text-sm text-gray-600">Quantity: {cloth.quantity}</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-bold text-blue-600">₹{parseInt(cloth.cost) * parseInt(cloth.quantity)}</p>
+                                      <p className="text-sm text-gray-500">₹{cloth.cost} per item</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    <ShoppingBag className="w-5 h-5" />
+                                    Total Items:
+                                  </span>
+                                  <span className="text-lg font-bold text-gray-800">{order.order_totalcloths}</span>
+                                </div>
+                                <div className="flex justify-between items-center mt-2">
+                                  <span className="text-lg font-bold text-green-600 flex items-center gap-2">
+                                    <BadgeDollarSign className="w-5 h-5" />
+                                    Total Amount:
+                                  </span>
+                                  <span className="text-2xl font-bold text-green-600">₹{order.order_totalamount}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ) : <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
-              <Truck className='w-16 h-16 md:w-20 md:h-20 mt-4 text-blue-600' />
-              <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
-                No active orders for agent now
+            )}
+          </div>
+        )}
+
+        {/* Completed Orders Tab */}
+        {activeTab === 'completed' && (
+          <div>
+            {orders.filter(o => {
+              const currentIndex = getCurrentStepIndex(o.order_flow);
+              return (currentIndex / o.order_flow.length) * 100 === 100;
+            }).length === 0 ? (
+              <div className='flex flex-col mx-auto w-full items-center justify-center py-12'>
+                <CheckCircle className='w-16 h-16 md:w-20 md:h-20 mt-4 text-green-500' />
+                <div className='text-lg md:text-xl font-medium mt-3 text-gray-700'>
+                  No completed orders yet
+                </div>
               </div>
-            </div>
-        }
+            ) : (
+              <div className="space-y-6">
+                {orders.map((order, index) => {
+                  const currentIndex = getCurrentStepIndex(order.order_flow);
+                  const progress = (currentIndex / order.order_flow.length) * 100;
+                  const isExpanded = expandedOrderId === order._id;
+
+                  if (progress < 100) return null;
+
+                  return (
+                    <div
+                      key={order._id}
+                      className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-green-100 animate-slideUp relative"
+                      style={{ animationDelay: `${500 + index * 100}ms` }}
+                    >
+                      {/* Completed Badge */}
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                          <CheckCircle className="w-3 h-3" />
+                          Completed
+                        </div>
+                      </div>
+
+                      <div className="p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 justify-between mb-4">
+                              <div className='flex items-center gap-3'>
+                                <span className="font-mono text-base font-semibold text-gray-700 bg-gray-100 px-4 py-2 rounded-lg">
+                                  #{order.orderid || order._id.slice(-8)}
+                                </span>
+                                <div className="w-7 h-7 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full text-white items-center flex justify-center text-center text-sm font-bold">
+                                  {index + 1}
+                                </div>
+                              </div>
+                              <span className="font-mono text-base font-semibold text-gray-700 bg-gray-100 px-4 py-2 rounded-lg">
+                                {order.user_name.trim().length > 13 ?
+                                  order.user_name.slice(0, 13) + '...' : order.user_name}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-xl">
+                                <p className="text-xs text-green-700 font-semibold mb-1">Amount</p>
+                                <p className="font-bold text-green-800 text-lg">₹{order.order_totalamount}</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-xl">
+                                <p className="text-xs text-green-700 font-semibold mb-1">Clothes</p>
+                                <p className="font-bold text-green-800 text-lg">{order.order_totalcloths}</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-xl">
+                                <p className="text-xs text-green-700 font-semibold mb-1">Slot</p>
+                                <p className="font-bold text-green-800 text-base">{order.order_slot}</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-xl">
+                                <p className="text-xs text-green-700 font-semibold mb-1">Payment</p>
+                                <p className="font-bold text-green-800 text-base capitalize">{order.order_paymenttype}</p>
+                              </div>
+                            </div>
+
+                            {/* Completed Progress Bar */}
+                            <div className="mb-4">
+                              <div className="flex justify-between text-sm text-gray-600 font-medium mb-2">
+                                <span>Order Progress</span>
+                                <span className="font-bold text-green-600">100% ✓</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                                <div
+                                  className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full shadow-md"
+                                  style={{ width: '100%' }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-3">
+                            <button
+                              onClick={() => toggleOrderItems(order._id)}
+                              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="w-4 h-4" />
+                                  Hide Items
+                                </>
+                              ) : (
+                                <>
+                                  <Box className="w-4 h-4" />
+                                  View Items
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expanded Items for Completed Orders */}
+                      {isExpanded && (
+                        <div className="px-6 pb-6 animate-slideDown">
+                          <div className="border-t border-gray-200 pt-6">
+                            <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                              <ShoppingBag className="w-5 h-5" />
+                              Order Items Details
+                            </h4>
+                            <div className="bg-gray-50 rounded-xl p-4">
+                              <div className="space-y-3">
+                                {order.order_cloths?.map((cloth) => (
+                                  <div key={cloth._id} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-2 rounded-lg">
+                                        {getClothIcon(cloth.item)}
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-gray-800">{cloth.item}</p>
+                                        <p className="text-sm text-gray-600">Quantity: {cloth.quantity}</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-bold text-green-600">₹{parseInt(cloth.cost) * parseInt(cloth.quantity)}</p>
+                                      <p className="text-sm text-gray-500">₹{cloth.cost} per item</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-lg font-bold text-gray-800">Total Items:</span>
+                                  <span className="text-lg font-bold text-gray-800">{order.order_totalcloths}</span>
+                                </div>
+                                <div className="flex justify-between items-center mt-2">
+                                  <span className="text-lg font-bold text-green-600">Total Amount:</span>
+                                  <span className="text-2xl font-bold text-green-600">₹{order.order_totalamount}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {showStatusModal && <StatusUpdateModal />}

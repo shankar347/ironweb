@@ -5,7 +5,6 @@ import {
   Package, 
   Shield,
   Clock,
-  Zap,
   CheckCircle,
   Star,
   Sparkles,
@@ -51,52 +50,40 @@ const PlansPage = () => {
 
   useEffect(() => {
     setIsVisible(true);
-    
-    // Auto-select popular plan and set fixed garments
+    // Auto-select popular plan
     const popularPlan = plansData.find(p => p.id === 'popular');
     setSelectedPlan(popularPlan);
-    setGarments({
-      shirt: 15,
-      pant: 15,
-      ladiesTop: 15,
-      chudidhar: 15,
-      cottonShirt: 0,
-      shawl: 0,
-      tShirt: 0,
-      jeansPant: 0,
-      ladiesPant: 0,
-      normalSaree: 0,
-      silkSaree: 0
-    });
   }, []);
 
   const plansData = [
     {
       id: 'popular',
       name: 'POPULAR PLAN',
-      type: 'popular',
-      price: 645,
+      type: 'prepaid',
+      price: 0,
       credits: 60,
+      baseCredits: 60,
+      maxGarments: 60,
+      allowedItemIds: ['shirt', 'pant', 'ladiesTop', 'ladiesPant', 'shawl'],
       features: [
-        '60 garments per month (Fixed Set)',
-        '15 Shirts + 15 Pants',
-        '15 Ladies Tops + 15 Chudidhars',
+        '60 garments per month',
+        'Select from 5 clothing types',
         '3 free deliveries monthly',
         'Delivery charges apply after 3 deliveries',
         'Automatic unit deduction',
         'Easy renewal when units reach 0'
       ],
-      buttonText: 'Subscribe Now',
+      buttonText: 'Select Plan',
       badge: '⭐ POPULAR',
       icon: Crown,
       color: 'from-yellow-500 to-amber-500',
       popular: true,
-      pricePerGarment: '₹10.75/garment',
       availableItems: [
-        { name: 'Shirt', price: 10, count: 15 },
-        { name: 'Pant', price: 10, count: 15 },
-        { name: 'Ladies Top', price: 13, count: 15 },
-        { name: 'Chudidhar', price: 15, count: 15 }
+        { name: 'Shirt', price: 10 },
+        { name: 'Pant', price: 10 },
+        { name: 'Ladies Top', price: 13 },
+        { name: 'Ladies Pant', price: 10 },
+        { name: 'Shawl', price: 10 }
       ]
     },
     {
@@ -203,187 +190,58 @@ const PlansPage = () => {
   const handlePlanSelect = (planId) => {
     const plan = plansData.find(p => p.id === planId);
     setSelectedPlan(plan);
-    
-    if (planId === 'popular') {
-      // Fixed set for popular plan
-      setGarments({
-        shirt: 15,
-        pant: 15,
-        ladiesTop: 15,
-        chudidhar: 15,
-        cottonShirt: 0,
-        shawl: 0,
-        tShirt: 0,
-        jeansPant: 0,
-        ladiesPant: 0,
-        normalSaree: 0,
-        silkSaree: 0
-      });
-    } else {
-      // Reset for other plans
-      setGarments({
-        shirt: 0,
-        pant: 0,
-        cottonShirt: 0,
-        shawl: 0,
-        tShirt: 0,
-        jeansPant: 0,
-        ladiesTop: 0,
-        ladiesPant: 0,
-        normalSaree: 0,
-        silkSaree: 0,
-        chudidhar: 0
-      });
-    }
+    // Reset garments for all plans
+    setGarments({
+      shirt: 0,
+      pant: 0,
+      cottonShirt: 0,
+      shawl: 0,
+      tShirt: 0,
+      jeansPant: 0,
+      ladiesTop: 0,
+      ladiesPant: 0,
+      normalSaree: 0,
+      silkSaree: 0,
+      chudidhar: 0
+    });
   };
 
   const handleGarmentChange = (updatedGarments) => {
-    // For popular plan, don't allow changes
-    if (selectedPlan?.id === 'popular') {
-      toast.info('Popular plan has a fixed garment set of 15 each');
-      return;
-    }
     setGarments(updatedGarments);
+  };
+
+  // Garment prices mapping
+  const garmentPrices = {
+    shirt: 10,
+    pant: 10,
+    cottonShirt: 20,
+    shawl: 10,
+    tShirt: 12,
+    jeansPant: 15,
+    ladiesTop: 13,
+    ladiesPant: 10,
+    normalSaree: 39,
+    silkSaree: 59,
+    chudidhar: 15
   };
 
   // Calculate totals
   const totalGarments = Object.values(garments).reduce((sum, val) => sum + val, 0);
-  const remainingCredits = selectedPlan?.type !== 'popular' 
-    ? Math.max(0, (selectedPlan?.baseCredits || 0) - totalGarments)
-    : 0;
-  const extraGarments = selectedPlan?.type !== 'popular'
-    ? Math.max(0, totalGarments - (selectedPlan?.baseCredits || 0))
-    : 0;
+  const remainingCredits = Math.max(0, (selectedPlan?.baseCredits || 0) - totalGarments);
+  const extraGarments = Math.max(0, totalGarments - (selectedPlan?.baseCredits || 0));
 
   // Check if within base credits
-  const isWithinBaseCredits = selectedPlan?.type !== 'popular' && totalGarments <= (selectedPlan?.baseCredits || 0);
+  const isWithinBaseCredits = totalGarments > 0 && totalGarments <= (selectedPlan?.baseCredits || 0);
 
-  // Calculate extra charges with garment prices
-  const calculateExtraCharges = () => {
-    if (!selectedPlan || selectedPlan.type === 'popular') return 0;
-
-    if (totalGarments <= selectedPlan.baseCredits) return 0;
-
-    // Garment prices mapping
-    const garmentPrices = {
-      shirt: 10,
-      pant: 10,
-      cottonShirt: 20,
-      shawl: 10,
-      tShirt: 12,
-      jeansPant: 15,
-      ladiesTop: 13,
-      ladiesPant: 10,
-      normalSaree: 39,
-      silkSaree: 59,
-      chudidhar: 15
-    };
-
-    // Create array of garments with counts and prices
-    const garmentItems = Object.entries(garments)
-      .filter(([_, count]) => count > 0)
-      .map(([id, count]) => ({
-        id,
-        count,
-        price: garmentPrices[id]
-      }));
-    
-    // Sort by price (cheapest first) to optimize base credit allocation
-    garmentItems.sort((a, b) => a.price - b.price);
-    
-    let remainingBaseCredits = selectedPlan.baseCredits;
-    let totalExtraCharges = 0;
-    
-    // Allocate base credits to cheapest garments first
-    garmentItems.forEach(garment => {
-      const baseAllocated = Math.min(garment.count, remainingBaseCredits);
-      remainingBaseCredits -= baseAllocated;
-      const extraCount = Math.max(0, garment.count - baseAllocated);
-      if (extraCount > 0) {
-        totalExtraCharges += extraCount * garment.price;
-      }
-    });
-    
-    return totalExtraCharges;
-  };
-
-  // Calculate garment breakdown for display
-  const calculateGarmentBreakdown = () => {
-    if (!selectedPlan || selectedPlan.type === 'popular') return [];
-
-    const garmentPrices = {
-      shirt: 10,
-      pant: 10,
-      cottonShirt: 20,
-      shawl: 10,
-      tShirt: 12,
-      jeansPant: 15,
-      ladiesTop: 13,
-      ladiesPant: 10,
-      normalSaree: 39,
-      silkSaree: 59,
-      chudidhar: 15
-    };
-
-    const garmentLabels = {
-      shirt: 'Shirt',
-      pant: 'Pant',
-      cottonShirt: 'Cotton Shirt',
-      shawl: 'Shawl',
-      tShirt: 'T Shirt',
-      jeansPant: 'Jeans Pant',
-      ladiesTop: 'Ladies Top',
-      ladiesPant: 'Ladies Pant',
-      normalSaree: 'Normal Saree',
-      silkSaree: 'Silk Saree',
-      chudidhar: 'Chudidhar'
-    };
-
-    const garmentItems = Object.entries(garments)
-      .filter(([_, count]) => count > 0)
-      .map(([id, count]) => ({
-        id,
-        label: garmentLabels[id],
-        count,
-        price: garmentPrices[id]
-      }));
-    
-    garmentItems.sort((a, b) => a.price - b.price);
-    
-    let remainingBaseCredits = selectedPlan.baseCredits;
-    const breakdown = [];
-    
-    garmentItems.forEach(garment => {
-      if (garment.count > 0) {
-        const baseAllocated = Math.min(garment.count, remainingBaseCredits);
-        remainingBaseCredits -= baseAllocated;
-        const extraCount = Math.max(0, garment.count - baseAllocated);
-        const extraCost = extraCount * garment.price;
-        
-        breakdown.push({
-          ...garment,
-          baseAllocated,
-          extraCount,
-          extraCost
-        });
-      }
-    });
-    
-    return breakdown;
-  };
-
-  const extraCharges = calculateExtraCharges();
-  const garmentBreakdown = calculateGarmentBreakdown();
-  
+  // Total amount = pure garment cost based on selection (no base plan price)
   const getTotalAmount = () => {
-    if (!selectedPlan) return 0;
-    
-    if (selectedPlan.type === 'popular') {
-      return selectedPlan.price;
-    } else {
-      return (selectedPlan.price || 0) + extraCharges;
-    }
+    return Object.entries(garments).reduce((total, [id, count]) => {
+      return total + count * (garmentPrices[id] || 0);
+    }, 0);
   };
+
+  const extraCharges = 0;
+  const garmentBreakdown = [];
 
   // Prepare subscription payload
   const prepareSubscriptionPayload = () => {
@@ -412,15 +270,15 @@ const PlansPage = () => {
 
     return {
       plan: selectedPlan.name,
-      credits: selectedPlan.credits || totalGarments,
+      credits: totalGarments,
       totalamount: getTotalAmount(),
       cloths: cloths,
       metadata: {
         planId: selectedPlan.id,
         planType: selectedPlan.type,
         baseCredits: selectedPlan.baseCredits || 0,
-        extraGarments: extraGarments,
-        extraCharges: extraCharges,
+        extraGarments: 0,
+        extraCharges: 0,
         totalGarments: totalGarments
       }
     };
@@ -438,16 +296,14 @@ const PlansPage = () => {
       return;
     }
 
-    if (selectedPlan.type !== 'popular') {
-      if (totalGarments === 0) {
-        toast.error('Please select at least one garment');
-        return;
-      }
-      
-      if (totalGarments > selectedPlan.maxGarments) {
-        toast.error(`Maximum limit is ${selectedPlan.maxGarments} garments`);
-        return;
-      }
+    if (totalGarments === 0) {
+      toast.error('Please select at least one garment');
+      return;
+    }
+    
+    if (selectedPlan.maxGarments && totalGarments > selectedPlan.maxGarments) {
+      toast.error(`Maximum limit is ${selectedPlan.maxGarments} garments`);
+      return;
     }
 
     setIsProcessing(true);
@@ -494,57 +350,16 @@ const PlansPage = () => {
     if (!selectedPlan) return true;
     if (!User || !User._id) return true;
     if (isProcessing) return true;
-    
-    if (selectedPlan.type === 'popular') {
-      return false;
-    } else {
-      return totalGarments === 0;
-    }
+    return totalGarments === 0;
   };
 
   const getButtonText = () => {
     if (!selectedPlan) return "Select a Plan";
     if (!User || !User._id) return "Login to Continue";
-    if (selectedPlan.type === 'popular') return `Pay ₹${selectedPlan.price} & Subscribe`;
     if (totalGarments === 0) return "Select Garments First";
     return `Pay ₹${getTotalAmount()} & Confirm`;
   };
 
-  // Popular plan summary for display
-  const popularPlanSummary = () => {
-    if (selectedPlan?.id !== 'popular') return null;
-    
-    return (
-      <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl p-4 sm:p-6 mb-6">
-        <h4 className="text-lg font-bold text-slate-900 mb-4">Fixed Garment Set (15 Each)</h4>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-            <span className="block text-sm text-slate-600">Shirts</span>
-            <span className="block text-2xl font-bold text-blue-600">15</span>
-            <span className="text-xs text-slate-500">₹10 each</span>
-          </div>
-          <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-            <span className="block text-sm text-slate-600">Pants</span>
-            <span className="block text-2xl font-bold text-blue-600">15</span>
-            <span className="text-xs text-slate-500">₹10 each</span>
-          </div>
-          <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-            <span className="block text-sm text-slate-600">Ladies Tops</span>
-            <span className="block text-2xl font-bold text-blue-600">15</span>
-            <span className="text-xs text-slate-500">₹13 each</span>
-          </div>
-          <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-            <span className="block text-sm text-slate-600">Chudidhars</span>
-            <span className="block text-2xl font-bold text-blue-600">15</span>
-            <span className="text-xs text-slate-500">₹15 each</span>
-          </div>
-        </div>
-        <p className="text-center text-sm text-slate-600 mt-4">
-          Total Value: ₹{(15*10 + 15*10 + 15*13 + 15*15)} | You Pay: ₹645 (Save ₹{(15*10 + 15*10 + 15*13 + 15*15) - 645})
-        </p>
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50 overflow-hidden">
@@ -658,68 +473,43 @@ const PlansPage = () => {
           </div>
         </div>
 
-        {/* Popular Plan Fixed Set Summary */}
-        {selectedPlan && selectedPlan.id === 'popular' && (
-          <div className={`mb-6 sm:mb-8 transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
-            {popularPlanSummary()}
-          </div>
-        )}
-
-        {/* Garment Selection & Price Summary - Only for non-popular plans */}
-        {selectedPlan && selectedPlan.type !== 'popular' && (
+        {/* Garment Selection & Price Summary - For all plans */}
+        {selectedPlan && (
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 lg:mb-16 transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
             <div className="relative">
               <GarmentSelector
                 garments={garments}
                 onGarmentsChange={handleGarmentChange}
-                baseCredits={selectedPlan.baseCredits}
-                maxLimit={selectedPlan.maxGarments}
+                baseCredits={selectedPlan.baseCredits || selectedPlan.credits}
+                maxLimit={selectedPlan.maxGarments || selectedPlan.credits}
                 selectedPlan={selectedPlan.name}
-                planPrice={selectedPlan.price}
+                planPrice={0}
                 totalGarments={totalGarments}
                 remainingCredits={remainingCredits}
                 extraGarments={extraGarments}
-                extraCharges={extraCharges}
+                extraCharges={0}
                 totalAmount={getTotalAmount()}
+                allowedItems={selectedPlan.allowedItemIds || null}
               />
             </div>
             <div className="relative">
-              <PriceSummary
-                selectedPlan={selectedPlan}
-                garments={garments}
-                garmentBreakdown={garmentBreakdown}
-                extraCharges={extraCharges}
-                totalAmount={getTotalAmount()}
-                planPrice={selectedPlan.price}
-                totalGarments={totalGarments}
-                remainingCredits={remainingCredits}
-                extraGarments={extraGarments}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Popular Plan Summary */}
-        {selectedPlan && selectedPlan.type === 'popular' && (
-          <div className={`mb-8 sm:mb-12 lg:mb-16 transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
-            <div className="max-w-2xl mx-auto px-4">
               <PriceSummary
                 selectedPlan={selectedPlan}
                 garments={garments}
                 garmentBreakdown={[]}
                 extraCharges={0}
                 totalAmount={getTotalAmount()}
-                planPrice={selectedPlan.price}
-                totalGarments={60}
-                remainingCredits={0}
+                planPrice={0}
+                totalGarments={totalGarments}
+                remainingCredits={remainingCredits}
                 extraGarments={0}
               />
             </div>
           </div>
         )}
 
-        {/* Within Base Credits Message - Only for non-popular plans */}
-        {selectedPlan && selectedPlan.type !== 'popular' && isWithinBaseCredits && totalGarments > 0 && (
+        {/* Within Base Credits Message */}
+        {selectedPlan && isWithinBaseCredits && (
           <div className={`mb-4 sm:mb-6 transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3 sm:p-4 max-w-2xl mx-auto">
               <div className="flex items-center">
@@ -801,11 +591,7 @@ const PlansPage = () => {
                 </>
               ) : (
                 <>
-                  {selectedPlan?.type === 'popular' ? (
-                    <Zap className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2 sm:mr-3 text-white" />
-                  ) : (
-                    <Calculator className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2 sm:mr-3 text-white" />
-                  )}
+                  <Calculator className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2 sm:mr-3 text-white" />
                   <span className="text-white">{getButtonText()}</span>
                   {!isConfirmDisabled() && <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 ml-2 sm:ml-3 transform group-hover:translate-x-2 transition-transform duration-300 text-white" />}
                 </>
@@ -820,7 +606,7 @@ const PlansPage = () => {
             </p>
           )}
           
-          {selectedPlan && selectedPlan.type !== 'popular' && totalGarments === 0 && (
+          {selectedPlan && totalGarments === 0 && (
             <div className="mt-4 sm:mt-6">
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4 max-w-md mx-auto">
                 <div className="flex items-center">
