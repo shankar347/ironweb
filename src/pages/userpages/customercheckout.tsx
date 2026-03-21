@@ -95,6 +95,15 @@ const Ordersummary = () => {
     const [couponError, setCouponError] = useState<string | null>(null);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
     const [modifiedOrderCloths, setModifiedOrderCloths] = useState<any[] | null>(null);
+    const [deliveryInfo, setDeliveryInfo] = useState<{
+        deliveryCharge: number;
+        isFreeDelivery: boolean;
+        freeDeliveryReason: string | null;
+        freeDeliveryReasonText: string | null;
+        freeOrdersRemaining: number;
+        itemsNeededForFree: number;
+        baseCharge: number;
+    } | null>(null);
     
     const steamcontext = useContext(SteamContext);
     const { orderdetails, setorderdetails, User: User1 } = steamcontext;
@@ -103,17 +112,15 @@ const Ordersummary = () => {
 
     const navigate = useNavigate();
 
-    // Delivery charges
-    const DELIVERY_CHARGE_NORMAL = 29;
-    const DELIVERY_CHARGE_EXPRESS = 39;
-
     // Check if payment method is cash on delivery
     const isCashOnDelivery = localOrderDetails?.otherdetails?.paymenttype?.toLowerCase() === 'cash on delivery';
     
     // Check delivery speed
     const deliverySpeed = localOrderDetails?.otherdetails?.deliverySpeed?.toLowerCase() || 'normal';
-    const isNormalDelivery = deliverySpeed === 'normal';
-    const DELIVERY_CHARGE = isNormalDelivery ? DELIVERY_CHARGE_NORMAL : DELIVERY_CHARGE_EXPRESS;
+
+    // Dynamic delivery charge from API (falls back to speed-based if not loaded yet)
+    const DELIVERY_CHARGE_FALLBACK = deliverySpeed === 'express' ? 39 : 29;
+    const DELIVERY_CHARGE = deliveryInfo?.isFreeDelivery ? 0 : (deliveryInfo?.deliveryCharge ?? DELIVERY_CHARGE_FALLBACK);
 
     // Fetch active subscription on component mount
     useEffect(() => {
@@ -142,13 +149,34 @@ const Ordersummary = () => {
             const parsedDetails = JSON.parse(checkdetails);
             setLocalOrderDetails(parsedDetails);
             setorderdetails(parsedDetails);
-            // Initialize modified order cloths with original
             setModifiedOrderCloths(parsedDetails.order_cloths);
         } else {
             toast.error('No order details found. Please start over.');
             navigate('/customer/bookslot');
         }
     }, [navigate, setorderdetails]);
+
+    // Fetch dynamic delivery charge from backend
+    useEffect(() => {
+        const fetchDeliveryInfo = async () => {
+            if (!localOrderDetails) return;
+            try {
+                const totalcloths = Number(localOrderDetails?.otherdetails?.totalcloths || 0);
+                const speed = localOrderDetails?.otherdetails?.deliverySpeed || 'normal';
+                const res = await fetch(
+                    `${API_URL}/orders/delivery-charge?quantity=${totalcloths}&deliverySpeed=${speed}`,
+                    { credentials: 'include' }
+                );
+                const data = await res.json();
+                if (data.success) {
+                    setDeliveryInfo(data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch delivery info:', error);
+            }
+        };
+        fetchDeliveryInfo();
+    }, [localOrderDetails]);
 
     // Fetch coupons
     useEffect(() => {
@@ -1452,15 +1480,58 @@ const Ordersummary = () => {
                                         
                                         {/* Delivery Charge */}
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Delivery ({deliverySpeed}):</span>
-                                            {appliedCoupon?.coupon?.discount_type === 'free_delivery' ? (
+                                            <span className="text-muted-foreground flex items-center gap-1">
+                                                <Truck className="w-3 h-3" />
+                                                Delivery ({deliverySpeed}):
+                                            </span>
+                                            {(deliveryInfo?.isFreeDelivery && appliedCoupon?.coupon?.discount_type !== 'free_delivery') ? (
+                                                <span className="font-medium text-green-600 flex items-center gap-1">
+                                                    FREE 🎉
+                                                </span>
+                                            ) : appliedCoupon?.coupon?.discount_type === 'free_delivery' ? (
                                                 <span className="font-medium text-green-600">
-                                                    Free (₹{DELIVERY_CHARGE} saved)
+                                                    Free (₹{deliveryInfo?.baseCharge ?? DELIVERY_CHARGE} saved)
                                                 </span>
                                             ) : (
                                                 <span className="font-medium">₹{DELIVERY_CHARGE}</span>
                                             )}
                                         </div>
+
+                                        {/* Free delivery reason badge */}
+                                        {deliveryInfo?.isFreeDelivery && appliedCoupon?.coupon?.discount_type !== 'free_delivery' && (
+                                            <div className="flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-2 py-1">
+                                                <Sparkles className="w-3 h-3 flex-shrink-0" />
+                                                <span>{deliveryInfo.freeDeliveryReasonText}</span>
+                                            </div>
+                                        )}
+
+                                        {/* Free orders remaining hint */}
+                                        {deliveryInfo && !deliveryInfo.isFreeDelivery && deliveryInfo.freeOrdersRemaining > 0 && (
+                                            <div className="flex items-center gap-1 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1">
+                                                <Gift className="w-3 h-3 flex-shrink-0" />
+                                                <span>You have <strong>{deliveryInfo.freeOrdersRemaining}</strong> free {deliveryInfo.freeOrdersRemaining === 1 ? 'delivery' : 'deliveries'} remaining</span>
+                                            </div>
+                                        )}
+
+                                        {/* Bulk free delivery suggestion */}
+                                        {deliveryInfo && !deliveryInfo.isFreeDelivery && deliveryInfo.itemsNeededForFree > 0 && deliveryInfo.freeOrdersRemaining === 0 && (
+                                            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Zap className="w-3 h-3 flex-shrink-0" />
+                                                    <span>Add <strong>{deliveryInfo.itemsNeededForFree}</strong> more items to unlock FREE delivery!</span>
+                                                </div>
+                                                <div className="w-full bg-amber-200 rounded-full h-1.5">
+                                                    <div
+                                                        className="bg-amber-500 h-1.5 rounded-full transition-all"
+                                                        style={{ width: `${Math.min(100, (Number(localOrderDetails?.otherdetails?.totalcloths || 0) / 20) * 100)}%` }}
+                                                    />
+                                                </div>
+                                                <div className="flex justify-between text-[10px] mt-0.5 text-amber-600">
+                                                    <span>{localOrderDetails?.otherdetails?.totalcloths || 0} items</span>
+                                                    <span>20 items for free</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         
                                         {paymentMethod === 'redeemed' && redemptionDetails && redemptionDetails.redeemableCredits > 0 && !isCashOnDelivery && (
                                             <div className="flex justify-between text-sm text-green-600">
